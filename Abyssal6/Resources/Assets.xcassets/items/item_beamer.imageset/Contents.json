@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "item_beamer.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

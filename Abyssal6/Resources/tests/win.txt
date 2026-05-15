@@ -1,0 +1,235 @@
+# ====================================================
+# SÉQUENCE DE VICTOIRE - ABYSSAL-6
+# Solution complète pour réparer le réacteur et gagner
+# ====================================================
+
+# --------------------------------------------
+# DÉPART : SAS (Sas d'entrée sécurisé)
+# --------------------------------------------
+
+# Vérifie qu'on est bien dans le sas
+roomis room_sas
+
+# Se déplacer vers le sas extérieur
+go north
+
+# Vérifie qu'on est dans le sas extérieur
+roomis room_air
+
+# Prendre le téléporteur (sera utilisé plus tard pour des échanges)
+
+# Vérifie que l'objet est dans la pièce
+roomhas item_beamer
+
+# Vérifie que le joueur ne l'a pas encore
+playerhasnot item_beamer
+
+# Ramasser le téléporteur
+take item_beamer
+
+# Vérifie qu'il n'est plus dans la pièce
+roomhasnot item_beamer
+
+# Vérifie que le joueur l'a bien
+playerhas item_beamer
+
+# Charger le téléporteur pour mémoriser l'emplacement actuel (sas extérieur)
+charge
+
+# --------------------------------------------
+# EXPLORATION DU NIVEAU SUPÉRIEUR
+# --------------------------------------------
+
+# Monter aux quartiers de l'équipage
+go up
+
+# Se déplacer vers le pont d'observation
+go north
+
+# Prendre la torche (nécessaire pour les échanges)
+take item_torch
+
+# Aller à la baie hydroponique
+go east
+
+# Prendre l'échantillon génétique
+take item_genetic
+
+# Déclencher le téléporteur pour revenir à l'emplacement mémorisé (sas extérieur)
+fire
+
+# --------------------------------------------
+# HUB PRINCIPAL : Poste de garde
+# --------------------------------------------
+
+# Se déplacer vers le poste de garde blindé
+go north
+
+# --------------------------------------------
+# ÉCHANGE 1 : Torche contre Carte bleue
+# --------------------------------------------
+
+# Donner la torche au garde Thompson en échange de la carte bleue
+give item_torch
+
+# --------------------------------------------
+# ZONE DU LABORATOIRE
+# --------------------------------------------
+
+# Aller vers l'est pour entrer dans le laboratoire
+go east
+
+# --------------------------------------------
+# ÉCHANGE 2 : Téléporteur contre Bouteille d'oxygène
+# --------------------------------------------
+
+# Donner le téléporteur au Dr. Chen en échange de la bouteille d'oxygène
+give item_beamer
+
+# --------------------------------------------
+# RETOUR AU POSTE DE GARDE
+# --------------------------------------------
+
+# Revenir vers l'ouest (poste de garde)
+go west
+
+# --------------------------------------------
+# INFIRMERIE
+# --------------------------------------------
+
+# Se déplacer vers le nord (infirmerie)
+go north
+
+# --------------------------------------------
+# ÉCHANGE 3 : Oxygène contre Cookie magique (élixir de super-force)
+# --------------------------------------------
+
+# Donner la bouteille d'oxygène au docteur Williams en échange du cookie magique
+give item_oxygen
+
+# Manger le cookie magique pour doubler la capacité de transport
+# (ligne drop commentée car inutile)
+eat item_magic_cookie
+
+# --------------------------------------------
+# ZONE HYDROPONIQUE
+# --------------------------------------------
+
+# Aller vers l'ouest (serre hydroponique)
+go west
+
+# --------------------------------------------
+# ÉCHANGE 4 : Échantillon génétique contre Combinaison de plongée
+# --------------------------------------------
+
+# Donner l'échantillon génétique à l'ingénieur Martinez en échange de la combinaison
+give item_genetic
+
+# --------------------------------------------
+# UTILISATION DE LA CARTE BLEUE
+# --------------------------------------------
+
+# Utiliser la carte bleue pour déverrouiller la porte vers l'est (si nécessaire)
+use item_blue_card
+
+# Se déplacer vers l'est (retour dans l'infirmerie)
+go east
+
+# --------------------------------------------
+# VOYAGE DE RETOUR
+# --------------------------------------------
+
+# Aller deux fois vers le sud – retour au poste de garde via l'infirmerie
+go south
+go south
+
+# Monter aux quartiers de l'équipage
+go up
+
+# Se déplacer vers l'est (infirmerie stérile)
+go east
+
+# --------------------------------------------
+# ÉCHANGE 5 : Carte bleue contre Trousse de premiers soins
+# --------------------------------------------
+
+# Donner la carte bleue à l'infirmière en échange de la trousse de secours
+give item_blue_card
+
+# --------------------------------------------
+# RETOUR À L'HYDROPONIE
+# --------------------------------------------
+
+# Se déplacer vers le nord (baie hydroponique)
+go north
+
+# --------------------------------------------
+# ÉCHANGE 6 : Trousse de premiers soins contre Carte rouge
+# --------------------------------------------
+
+# Donner la trousse de secours au chercheur (généticien) en échange de la carte rouge
+give item_firstaid
+
+# --------------------------------------------
+# DESCENTE VERS LA SALLE DES MOTEURS
+# --------------------------------------------
+
+# Aller vers l'ouest (pont d'observation)
+go west
+
+# Aller vers le sud (quartiers de l'équipage)
+go south
+
+# Descendre (sas extérieur)
+go down
+
+# --------------------------------------------
+# SALLE DES MOTEURS AUXILIAIRES
+# --------------------------------------------
+
+# Aller vers le nord (poste de garde)
+go north
+
+# Aller vers l'est (laboratoire)
+go east
+
+# --------------------------------------------
+# UTILISATION DE LA COMBINAISON DE PLONGÉE
+# --------------------------------------------
+
+# Utiliser la combinaison de plongée pour déverrouiller la porte vers le bas
+use item_diving_suit
+
+# Descendre dans la salle des moteurs auxiliaires
+go down
+
+# --------------------------------------------
+# PRÉPARATIONS FINALES
+# --------------------------------------------
+
+# Prendre la clé anglaise (outil de réparation)
+take item_wrench
+
+# Utiliser la carte rouge pour déverrouiller la porte vers l'est
+use item_red_card
+
+# Aller vers l'est (salle des machines)
+go east
+
+# Vérifie qu'on est dans la salle des machines
+roomis room_machines
+
+# --------------------------------------------
+# LE RÉACTEUR
+# --------------------------------------------
+
+# Utiliser la clé anglaise pour déverrouiller la porte finale vers le réacteur
+use item_wrench
+
+# Aller vers le nord pour entrer dans le réacteur
+# go north
+
+# --------------------------------------------
+# VICTOIRE !
+# Le réacteur est réparé, la station est sauvée
+# --------------------------------------------
