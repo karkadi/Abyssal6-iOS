@@ -19,11 +19,11 @@ enum ItemType: String, CaseIterable {
     case firstAid = "firstaid"
     case magicCookie = "magic_cookie"
     case beamer = "beamer"
-    
+
     // Localization keys
     var nameKey: String { "item_\(rawValue)" }
     var imageName: String { "item_\(rawValue)" }
-    
+
     // Physical properties (in grams)
     var weight: Int {
         switch self {
@@ -38,14 +38,14 @@ enum ItemType: String, CaseIterable {
         case .beamer: return 5200
         }
     }
-    
+
     var canBePickedUp: Bool {
         switch self {
         case .divingSuit, .torch, .blueCard, .redCard, .wrench, .genetic, .oxygen, .firstAid, .magicCookie, .beamer:
             return true
         }
     }
-    
+
     var isUsable: Bool {
         switch self {
         case .divingSuit, .torch, .blueCard, .redCard, .wrench, .beamer:
@@ -54,7 +54,7 @@ enum ItemType: String, CaseIterable {
             return false
         }
     }
-    
+
     /// Factory method to create the appropriate Item subclass.
     func createItem() -> Item {
         switch self {
@@ -71,4 +71,3 @@ enum ItemType: String, CaseIterable {
         }
     }
 }
-

@@ -12,14 +12,14 @@ struct InventoryPickerView: View {
     let items: [Item]
     let onSelect: (Item) -> Void
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationView {
             List(items) { item in
                 Button(action: {
                     onSelect(item)
                     dismiss()
-                }) {
+                }, label: {
                     HStack {
                         Image(item.imageName)
                             .resizable()
@@ -29,7 +29,7 @@ struct InventoryPickerView: View {
                         Text(String(format: "%.1f kg", Double(item.weight) / 1000))
                             .foregroundColor(.secondary)
                     }
-                }
+                })
             }
             .navigationTitle(Lang.string("select_item"))
             .toolbar {

@@ -11,7 +11,7 @@ enum GameError: Error, LocalizedError {
     case itemNotFound
     case itemNotPickable
     case tooHeavy
-    
+
     var errorDescription: String? {
         switch self {
         case .itemNotFound:
@@ -22,7 +22,7 @@ enum GameError: Error, LocalizedError {
             return Lang.string("error_too_heavy")
         }
     }
-    
+
     var resourceKey: String {
         switch self {
         case .itemNotFound: return "error_item_not_found"

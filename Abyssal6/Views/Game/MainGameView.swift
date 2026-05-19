@@ -11,15 +11,15 @@ import SwiftUI
 struct MainGameView: View {
     @State private var viewModel = GameViewModel()
     @State private var commandInput: String = ""
-    
+
     // Baseline reference height standard matching secondary puzzle views
     private let refHeight: CGFloat = 680
-    
+
     var body: some View {
         GeometryReader { geometry in
             // 1. Establish a global vertical scaling index factor
             let scaleY = geometry.size.height / refHeight
-            
+
             HStack(spacing: 12) {
                 // Left side: Game visual + terminal
                 VStack(spacing: 12) {
@@ -31,13 +31,13 @@ struct MainGameView: View {
                     )
                     .frame(height: geometry.size.height * 0.65)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    
+
                     // Terminal
                     TerminalView(viewModel: viewModel.terminalVM, scaleFactor: scaleY)
                         .frame(height: geometry.size.height * 0.3)
                 }
                 .frame(width: geometry.size.width * 0.68)
-                
+
                 // Right side: Control panel
                 VStack(spacing: max(8, 16 * scaleY)) {
                     // Timer and room label
@@ -54,7 +54,7 @@ struct MainGameView: View {
                             .foregroundColor(.abyssalText)
                     }
                     .padding(.horizontal)
-                    
+
                     // Direction pad (4x2 grid)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12 * scaleY) {
                         ForEach(directionButtons, id: \.title) { button in
@@ -66,7 +66,7 @@ struct MainGameView: View {
                         }
                     }
                     .padding(.horizontal)
-                    
+
                     // Command input field
                     HStack {
                         TextField("Enter command", text: $commandInput)
@@ -77,16 +77,16 @@ struct MainGameView: View {
                             .foregroundColor(.abyssalText)
                             .font(.custom("Menlo", size: 14 * scaleY))
                             .onSubmit(sendCommand)
-                        
+
                         AbyssalButton(title: "GO", color: .abyssalAccent) {
                             sendCommand()
                         }
                         .frame(width: 60 * scaleY, height: 44 * scaleY)
                     }
                     .padding(.horizontal)
-                    
+
                     Divider().background(Color.abyssalDim)
-                    
+
                     // Action buttons (grid 3x3)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12 * scaleY) {
                         ForEach(actionButtons, id: \.title) { button in
@@ -106,7 +106,7 @@ struct MainGameView: View {
                         }
                     }
                     .padding(.horizontal)
-                    
+
                     Spacer()
                 }
                 .frame(width: geometry.size.width * 0.28)
@@ -114,7 +114,7 @@ struct MainGameView: View {
             }
             .padding(12 * scaleY)
             .background(Color.abyssalBg.ignoresSafeArea())
-            
+
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
@@ -200,30 +200,33 @@ struct MainGameView: View {
                 viewModel.showEasterEgg(for: torch)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("timeLeftDidChange"))) { _ in
+            viewModel.updateTime()
+        }
     }
-    
+
     private func sendCommand() {
         guard !commandInput.isEmpty else { return }
         viewModel.sendCommand(commandInput)
         commandInput = ""
     }
-    
+
     // MARK: - Button Definitions
-    
+
     private struct ActionButton: Identifiable {
         let id = UUID()
         let title: String
         let command: String
         let action: ButtonAction
     }
-    
+
     private enum ButtonAction {
         case command
         case inventory
         case talk
         case give
     }
-    
+
     private let directionButtons: [ActionButton] = [
         ActionButton(title: "⬆ UP", command: "go up", action: .command),
         ActionButton(title: "↑ N", command: "go north", action: .command),
@@ -232,7 +235,7 @@ struct MainGameView: View {
         ActionButton(title: "↓ S", command: "go south", action: .command),
         ActionButton(title: "→ E", command: "go east", action: .command)
     ]
-    
+
     private let actionButtons: [ActionButton] = [
         ActionButton(title: "LOOK", command: "look", action: .command),
         ActionButton(title: "INV", command: "", action: .inventory),

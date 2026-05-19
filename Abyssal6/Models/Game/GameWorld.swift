@@ -13,15 +13,15 @@ import Foundation
 final class GameWorld {
     static let shared = GameWorld()
     private var roomMap: [String: Room] = [:]
-    
+
     func registerRoom(_ room: Room) {
         roomMap[room.key] = room
     }
-    
+
     func room(forKey key: String) -> Room? {
         return roomMap[key]
     }
-    
+
     func clear() {
         roomMap.removeAll()
     }

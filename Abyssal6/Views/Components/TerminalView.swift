@@ -10,12 +10,12 @@ import SwiftUI
 struct TerminalView: View {
     @State private var viewModel: TerminalViewModel
     let scaleFactor: CGFloat // Scaling down font constraints relative to device height
-    
+
     init(viewModel: TerminalViewModel = TerminalViewModel(), scaleFactor: CGFloat = 1.0) {
         _viewModel = State(initialValue: viewModel)
         self.scaleFactor = scaleFactor
     }
-    
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -46,16 +46,16 @@ struct TerminalView: View {
             }
         }
     }
-    
+
     // MARK: - Public API (can be exposed via the viewModel, but for convenience)
     func append(_ text: String) {
         viewModel.append(text)
     }
-    
+
     func typewrite(_ text: String, delay: TimeInterval = 0.03) {
         viewModel.typewrite(text, delay: delay)
     }
-    
+
     func clear() {
         viewModel.clear()
     }
@@ -64,10 +64,10 @@ struct TerminalView: View {
 // MARK: - Preview
 
 #Preview {
-    let vm = TerminalViewModel()
-    vm.append("Welcome to Abyssal-6")
-    vm.typewrite("This is a typewriter effect...", delay: 0.05)
-    return TerminalView(viewModel: vm)
+    let viewModel = TerminalViewModel()
+    viewModel.append("Welcome to Abyssal-6")
+    viewModel.typewrite("This is a typewriter effect...", delay: 0.05)
+    return TerminalView(viewModel: viewModel)
         .frame(width: 600, height: 300)
         .padding()
         .background(Color.gray.opacity(0.2))

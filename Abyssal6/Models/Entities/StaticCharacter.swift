@@ -46,7 +46,7 @@ class StaticCharacter: Identifiable, Entity {
         self.currentRoom = newRoom
         newRoom.addCharacter(self)      // add to new room
     }
-    
+
     // MARK: - Fluent Builders
     @discardableResult
     func setGreeting(_ key: String) -> Self {

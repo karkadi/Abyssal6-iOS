@@ -11,15 +11,15 @@ import SwiftUI
 struct VoltmeterView: View {
     /// Voltage value (0.0 … 10.0)
     let voltage: Double
-    
+
     // Reference coordinates from the original Java PuzzlePage (900x680 canvas)
     private let refCenter = CGPoint(x: 638, y: 296)
     private let refZero   = CGPoint(x: 605, y: 270)
     private let refMax    = CGPoint(x: 671, y: 270)
-    
+
     // Maximum voltage represented (10V)
     private let maxVoltage: Double = 10.0
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -28,12 +28,12 @@ struct VoltmeterView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: geometry.size.width, height: geometry.size.height)
-                
+
                 // Needle drawn with Canvas
                 Canvas { context, size in
                     let scaleX = size.width / 900
                     let scaleY = size.height / 680
-                    
+
                     let center = CGPoint(
                         x: refCenter.x * scaleX,
                         y: refCenter.y * scaleY
@@ -46,20 +46,20 @@ struct VoltmeterView: View {
                         x: refMax.x * scaleX,
                         y: refMax.y * scaleY
                     )
-                    
+
                     // Interpolate needle position based on voltage
                     let ratio = min(max(voltage / maxVoltage, 0.0), 1.0)
                     let needleEnd = CGPoint(
                         x: zero.x + (maxPoint.x - zero.x) * ratio,
                         y: zero.y + (maxPoint.y - zero.y) * ratio
                     )
-                    
+
                     var path = Path()
                     path.move(to: center)
                     path.addLine(to: needleEnd)
-                    
+
                     context.stroke(path, with: .color(.red), lineWidth: 3)
-                    
+
                     // Draw the pivot point
                     context.fill(
                         Path(ellipseIn: CGRect(x: center.x - 4, y: center.y - 4, width: 8, height: 8)),
@@ -67,7 +67,7 @@ struct VoltmeterView: View {
                     )
                 }
                 .frame(width: geometry.size.width, height: geometry.size.height)
-                
+
                 // Digital voltage display
                 Text(String(format: "%.2f V", voltage))
                     .font(.system(size: 18, weight: .bold, design: .monospaced))

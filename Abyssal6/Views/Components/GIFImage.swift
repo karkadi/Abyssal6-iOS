@@ -18,16 +18,16 @@ struct GIFImage: UIViewRepresentable {
         webView.backgroundColor = .clear
         webView.isOpaque = false
         webView.isUserInteractionEnabled = false
-        
+
         loadGIF(into: webView)
-        
+
         return webView
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
         // The .id() modifier on the parent view handles recreations during transitions.
     }
-    
+
     private func loadGIF(into webView: WKWebView) {
         // Base HTML template to ensure the image scales to cover the viewport cleanly
         let htmlTemplate = { (urlPath: String) in
@@ -48,7 +48,7 @@ struct GIFImage: UIViewRepresentable {
 
         // Case 1: Check if the source is a remote URL
         if source.lowercased().hasPrefix("http://") || source.lowercased().hasPrefix("https://") {
-            if let _ = URL(string: source) {
+            if URL(string: source) != nil {
                 webView.loadHTMLString(htmlTemplate(source), baseURL: nil)
             }
         }
@@ -56,7 +56,7 @@ struct GIFImage: UIViewRepresentable {
         else {
             // Normalize name removing any accidental extensions the user might pass
             let cleanName = source.replacingOccurrences(of: ".gif", with: "", options: .caseInsensitive)
-            
+
             if let bundleURL = Bundle.main.url(forResource: cleanName, withExtension: "gif") {
                 webView.loadHTMLString(htmlTemplate(bundleURL.lastPathComponent), baseURL: bundleURL.deletingLastPathComponent())
             }

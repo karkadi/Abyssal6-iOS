@@ -10,11 +10,11 @@ import DIContainer
 @Observable
 final class RootViewModel {
     var gameState: GameState = .intro
-    
+
     @ObservationIgnored
     @Injected private var engine: GameEngineProtocol
-    
-    func restartGame(){
+
+    func restartGame() {
         engine.restartGame()
     }
 }

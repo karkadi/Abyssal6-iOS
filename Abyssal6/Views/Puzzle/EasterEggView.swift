@@ -167,11 +167,11 @@ struct EasterEggView: View {
         Task { @MainActor in
             // Descriptive duration API
             try? await Task.sleep(for: .seconds(0.3))
-            
+
             dismiss()
             onDismiss()
         }
-        
+
     }
 }
 

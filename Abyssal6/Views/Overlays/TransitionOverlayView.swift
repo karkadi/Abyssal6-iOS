@@ -83,7 +83,7 @@ struct TransitionOverlayView: View {
     // MARK: - Menu Builders
     @ViewBuilder
     private func characterContextMenu(for overlay: CharacterOverlay) -> some View {
-        if let character = findCharacter(byNameKey: overlay.nameKey)  {
+        if let character = findCharacter(byNameKey: overlay.nameKey) {
             Group {
                 Button(Lang.string("talk_button")) {
                     viewModel.interpretCommand("talk \(character.nameKey)")
@@ -206,9 +206,9 @@ struct TransitionOverlayView: View {
         let totalWidth = CGFloat(count) * overlayWidth + CGFloat(max(0, count - 1)) * overlaySpacing
         let startX = geometry.size.width - totalWidth - rightMargin
         
-        let x = startX + CGFloat(index) * overlayWidth + (64 * scaleFactor)
-        let y = geometry.size.height - (256 * scaleFactor) - rightMargin + (128 * scaleFactor)
-        return CGPoint(x: x, y: y)
+        let posX = startX + CGFloat(index) * overlayWidth + (64 * scaleFactor)
+        let posY = geometry.size.height - (256 * scaleFactor) - rightMargin + (128 * scaleFactor)
+        return CGPoint(x: posX, y: posY)
     }
     
     private func positionForRoomItem(_ overlay: ItemOverlay, geometry: GeometryProxy) -> CGPoint {
@@ -217,9 +217,9 @@ struct TransitionOverlayView: View {
         let itemSize = 48 * scaleFactor
         let itemSpacing = 10 * scaleFactor
         
-        let x = padding + CGFloat(index) * (itemSize + itemSpacing) + (itemSize / 2)
-        let y: CGFloat = (5 * scaleFactor) + (itemSize / 2)
-        return CGPoint(x: x, y: y)
+        let posX = padding + CGFloat(index) * (itemSize + itemSpacing) + (itemSize / 2)
+        let posY: CGFloat = (5 * scaleFactor) + (itemSize / 2)
+        return CGPoint(x: posX, y: posY)
     }
     
     private func positionForInventoryItem(_ overlay: ItemOverlay, geometry: GeometryProxy) -> CGPoint {
@@ -228,19 +228,19 @@ struct TransitionOverlayView: View {
         let itemSize = 48 * scaleFactor
         let itemSpacing = 10 * scaleFactor
         
-        let x = padding + CGFloat(index) * (itemSize + itemSpacing) + (itemSize / 2)
-        let y = geometry.size.height - itemSize - padding + (itemSize / 2)
-        return CGPoint(x: x, y: y)
+        let posX = padding + CGFloat(index) * (itemSize + itemSpacing) + (itemSize / 2)
+        let posY = geometry.size.height - itemSize - padding + (itemSize / 2)
+        return CGPoint(x: posX, y: posY)
     }
 }
 // MARK: - Preview
 
 #Preview {
-    let vm = TransitionOverlayViewModel()
-    vm.addCharacterOverlay(nameKey: "character_guard", imageName: "character_guard")
-    vm.addRoomItemOverlay(id: UUID(), nameKey: "item_wrench", imageName: "item_wrench")
-    vm.addInventoryOverlay(id: UUID(), nameKey: "item_beamer", imageName: "item_beamer")
-    return TransitionOverlayView(currentBackground: .constant("sas.gif"), viewModel: .constant(vm), scaleFactor: 1.0)
+    let viewModel = TransitionOverlayViewModel()
+    viewModel.addCharacterOverlay(nameKey: "character_guard", imageName: "character_guard")
+    viewModel.addRoomItemOverlay(id: UUID(), nameKey: "item_wrench", imageName: "item_wrench")
+    viewModel.addInventoryOverlay(id: UUID(), nameKey: "item_beamer", imageName: "item_beamer")
+    return TransitionOverlayView(currentBackground: .constant("sas.gif"), viewModel: .constant(viewModel), scaleFactor: 1.0)
         .frame(width: 900, height: 680)
         .background(Color.black)
 }

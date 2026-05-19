@@ -34,7 +34,7 @@ final class TerminalViewModel {
         currentIndex = 0
         isTyping = true
 
-        typewriterTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: true) { [weak self] timer in
+        typewriterTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             if self.currentIndex < self.pendingText.count {
                 let index = self.pendingText.index(self.pendingText.startIndex, offsetBy: self.currentIndex)

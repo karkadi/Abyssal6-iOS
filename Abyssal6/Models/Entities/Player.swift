@@ -16,13 +16,13 @@ final class Player: Identifiable {
     private(set) var currentWeight: Int = 0
     private var roomHistory: [Room] = []         // last element is the current room
     weak var gameEngine: GameEngine?
-    
+
     // MARK: - Initialization
     init(startingRoom: Room) {
         self.currentRoom = startingRoom
         roomHistory.append(startingRoom)
     }
-    
+
     // MARK: - Inventory Management
     func takeItem(_ itemName: String) throws -> Item {
         guard let item = currentRoom.removeItem(named: itemName) else {
@@ -41,7 +41,7 @@ final class Player: Identifiable {
         gameEngine?.refreshInventory()
         return item
     }
-    
+
     @discardableResult
     func dropItem(_ itemName: String) -> Item? {
         guard let index = inventory.firstIndex(where: { $0.name == itemName }) else {
@@ -53,7 +53,7 @@ final class Player: Identifiable {
         gameEngine?.refreshInventory()
         return item
     }
-    
+
     @discardableResult
     func eatItem(_ itemName: String) -> Item? {
         guard let index = inventory.firstIndex(where: { $0.name == itemName }) else {
@@ -64,12 +64,12 @@ final class Player: Identifiable {
         gameEngine?.refreshInventory()
         return item
     }
-    
+
     // MARK: - Inventory Queries
     func hasItem(named itemName: String) -> Bool {
         return inventory.contains { $0.name == itemName }
     }
-    
+
     func getInventoryDescription() -> String {
         guard !inventory.isEmpty else {
             return Lang.string("inventory_empty")
@@ -81,14 +81,15 @@ final class Player: Identifiable {
         desc += "\n" + weightString
         return desc
     }
-    
+
     var weightString: String {
         return String(format: Lang.string("total_weight"),
                       Double(currentWeight) / 1000.0,
                       Double(maxWeight) / 1000.0)
     }
-    
+
     // MARK: - Item Exchange (used by GiveCommand)
+    @discardableResult
     func exchangeItems(given givenItem: Item, received receivedItem: Item) throws -> Bool {
         guard let index = inventory.firstIndex(where: { $0.id == givenItem.id }) else {
             return false
@@ -105,21 +106,21 @@ final class Player: Identifiable {
         gameEngine?.refreshInventory()
         return true
     }
-    
+
     func findBeamerInInventory() -> Beamer? {
         return inventory.first(where: { $0 is Beamer }) as? Beamer
     }
-    
+
     // MARK: - Room History
     func pushHistory() {
         roomHistory.append(currentRoom)
     }
-    
+
     func pushHistory(_ room: Room) {
         // Used during restore – add without checking current room
         roomHistory.append(room)
     }
-    
+
     func goBack() -> Bool {
         guard roomHistory.count > 1 else { return false }
         let previousRoom = roomHistory[roomHistory.count - 2]
@@ -129,41 +130,41 @@ final class Player: Identifiable {
         gameEngine?.setPlayerRoom(currentRoom)
         return true
     }
-    
+
     var previousRoom: Room? {
         guard roomHistory.count >= 2 else { return nil }
         return roomHistory[roomHistory.count - 2]
     }
-    
+
     var history: [Room] {
         return roomHistory
     }
-    
+
     var historySize: Int {
         return roomHistory.count
     }
-    
+
     // MARK: - Setters for Restoration
     func setMaxWeight(_ newMax: Int) {
         maxWeight = newMax
     }
-    
+
     func getMaxWeight() -> Int {
         return maxWeight
     }
-    
+
     func setCurrentWeight(_ newWeight: Int) {
         currentWeight = newWeight
     }
-    
+
     func getCurrentWeight() -> Int {
         return currentWeight
     }
-    
+
     func setCurrentRoom(_ room: Room) {
         currentRoom = room
     }
-    
+
     // MARK: - Utility
     func clearInventory() {
         inventory.removeAll()

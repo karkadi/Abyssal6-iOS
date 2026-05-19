@@ -25,13 +25,13 @@ struct IntroView: View {
     @State private var titleOpacity: Double = 1.0
     @State private var showTypewriter = false
     @State private var startGameFlag = false
-    
+
     // MARK: - View Model
     @State private var viewModel = IntroViewModel()
-    
+
     // Core canvas reference height matching the game engine layout standards
     private let refHeight: CGFloat = 680
-    
+
     // Skip intro immediately – used by tap gesture and start button
     private func skipToGame() {
         withAnimation(.easeOut(duration: 0.3)) {
@@ -40,23 +40,23 @@ struct IntroView: View {
             viewModel.stopBackgroundMusic()
         }
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             // Calculate scale modifier solely based on device screen height
             let scaleY = geometry.size.height / refHeight
-            
+
             ZStack {
                 // 2. Dark overlay for better text readability
                 Color.abyssalBg.opacity(1.0)
                     .ignoresSafeArea()
-                
+
                 // 1. Animated background
                 GIFImage(source: "background")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                
+
                 // 3. Main content
                 VStack(spacing: 10) { // Spacing scales down on shorter devices
                     // Title (fades out after ~3 seconds)
@@ -71,7 +71,7 @@ struct IntroView: View {
                             do {
                                 try await Task.sleep(for: .seconds(0.5))
                                 showTypewriter = true
-                                
+
                                 // 2. Wait the remaining 12.5 seconds (to hit the total 13.0 second mark)
                                 try await Task.sleep(for: .seconds(5.0))
                                 withAnimation(.easeOut(duration: 5.0)) {
@@ -81,7 +81,7 @@ struct IntroView: View {
                                 // Handles cancellation gracefully if the user skips or leaves the view
                             }
                         }
-                    
+
                     // Typewriter text – appears only after title starts fading
                     if showTypewriter && !startGameFlag {
                         TypewriterText(Lang.string("introduction"), scaleY: scaleY) {
@@ -90,9 +90,9 @@ struct IntroView: View {
                             viewModel.stopBackgroundMusic()
                         }
                     }
-                    
+
                     Spacer()
-                    
+
                     // Buttons – always visible, but hidden when game starts
                     if !startGameFlag {
                         AbyssalButton(title: Lang.string("start_game"),
@@ -101,7 +101,7 @@ struct IntroView: View {
                         }
                         // Scale the button frame/content layout directly
                                       .scaleEffect(scaleY, anchor: .center)
-                        
+
                     }
                 }
                 // Adaptive layout padding that shrinks to prevent layout cutoff on narrow screens

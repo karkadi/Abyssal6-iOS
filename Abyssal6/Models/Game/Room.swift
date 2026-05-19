@@ -26,7 +26,7 @@ class Room: Identifiable, Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
+
     let id = UUID()
     let key: String
     let imageName: String
@@ -60,18 +60,14 @@ class Room: Identifiable, Hashable {
         return desc
     }
 
-    private var exitString: String {
-        var result = Lang.string("exits")
-        for direction in exits.keys.sorted() {
-            result += " " + Lang.string(direction)
-            if trapDoors.contains(direction) {
-                result += "⚠️"
-            }
-            if isDoorLocked(direction) {
-                result += " 🔒"
-            }
+    var exitString: String {
+        let directions = exits.keys.sorted().map { direction in
+            var output = Lang.string(direction)
+            if trapDoors.contains(direction) { output += "⚠️" }
+            if isDoorLocked(direction) { output += "🔒" }
+            return output
         }
-        return result
+        return Lang.string("exits") + " " + directions.joined(separator: " ")
     }
 
     private var itemString: String {
@@ -84,7 +80,7 @@ class Room: Identifiable, Hashable {
     }
 
     private var entityString: String {
-        let nonPlayerChars = characters.filter { !($0 is Player) }
+        let nonPlayerChars = characters
         guard !nonPlayerChars.isEmpty else { return "" }
         var result = "\n" + Lang.string("presences")
         for char in nonPlayerChars {
@@ -140,7 +136,7 @@ class Room: Identifiable, Hashable {
     // MARK: - Characters Management
     func addCharacter(_ character: StaticCharacter) {
         guard !characters.contains(where: { $0.id == character.id }) else { return }
-           characters.append(character)
+        characters.append(character)
     }
 
     func removeCharacter(_ character: StaticCharacter) {
@@ -152,7 +148,7 @@ class Room: Identifiable, Hashable {
     }
 
     var hasCharacters: Bool {
-        return characters.contains { !($0 is Player) }
+        return !characters.isEmpty
     }
 
     // MARK: - Doors Management

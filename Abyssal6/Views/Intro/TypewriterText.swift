@@ -14,11 +14,11 @@ struct TypewriterText: View {
     let delay: TimeInterval          // milliseconds per character
     let onStartTyping: (() -> Void)?
     let onComplete: (() -> Void)?
-    
+
     @State private var displayedText = ""
     @State private var currentIndex = 0
     @State private var timer: Timer?
-    
+
     init(
         _ fullText: String,
         scaleY: CGFloat = 1.0,
@@ -32,7 +32,7 @@ struct TypewriterText: View {
         self.onStartTyping = onStartTyping
         self.onComplete = onComplete
     }
-    
+
     var body: some View {
         ScrollView {
             Text(displayedText)
@@ -47,7 +47,7 @@ struct TypewriterText: View {
         .onAppear(perform: startTyping)
         .onDisappear { timer?.invalidate() }
     }
-    
+
     private func startTyping() {
         displayedText = ""
         currentIndex = 0

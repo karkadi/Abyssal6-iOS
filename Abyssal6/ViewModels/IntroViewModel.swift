@@ -11,17 +11,17 @@ import DIContainer
 final class IntroViewModel {
     @ObservationIgnored
     @Injected private var engine: GameEngineProtocol
-    
-    func stopBackgroundMusic(){
+
+    func stopBackgroundMusic() {
         engine.stopBackgroundMusic()
     }
-    
-    func startMission(){
+
+    func startMission() {
         engine.startMission()
     }
-    
-    func playBackgroundMusic(_ file: String){
+
+    func playBackgroundMusic(_ file: String) {
         engine.playBackgroundMusic(file)
     }
-    
+
 }

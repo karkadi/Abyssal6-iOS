@@ -13,20 +13,20 @@ struct CharacterInteractionSheet: View {
     let mode: CharacterInteractionMode
     let inventory: [Item]
     let onComplete: (Item?) -> Void
-    
+
     @State private var selectedItem: Item?
     @State private var showingItemPicker = false
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Text(mode == .talk ? Lang.string("talk_title") : Lang.string("give_title"))
                 .font(.title2)
                 .foregroundColor(.abyssalAccent)
-            
+
             Text(character.localizedName)
                 .font(.headline)
                 .foregroundColor(.abyssalText)
-            
+
             if mode == .talk {
                 Text(character.fullDescription)
                     .font(.body)
@@ -42,14 +42,14 @@ struct CharacterInteractionSheet: View {
                         showingItemPicker = true
                     }
                     .buttonStyle(.borderedProminent)
-                    
+
                     if let item = selectedItem {
                         Text("Selected: \(item.name)")
                             .foregroundColor(.abyssalSuccess)
                     }
                 }
             }
-            
+
             HStack(spacing: 20) {
                 AbyssalButton(title: Lang.string("cancel"), color: .abyssalDanger) {
                     onComplete(nil)
@@ -75,4 +75,3 @@ struct CharacterInteractionSheet: View {
         }
     }
 }
-

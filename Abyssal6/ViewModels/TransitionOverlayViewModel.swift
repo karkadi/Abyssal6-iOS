@@ -22,7 +22,7 @@ struct ItemOverlay: Identifiable {
     let imageName: String
     let type: ItemOverlayType
     var alpha: Double = 0.0
-    
+
     enum ItemOverlayType {
         case roomItem
         case inventory
@@ -38,18 +38,18 @@ final class TransitionOverlayViewModel {
     private(set) var roomItemOverlays: [ItemOverlay] = []
     private(set) var inventoryOverlays: [ItemOverlay] = []
     private var transitioningToNewImage = false
-    
+
     @ObservationIgnored
     @Injected private var engine: GameEngineProtocol
-    
+
     var player: Player {
         return engine.player
     }
-    
+
     func showItemDetails(_ item: Item) {
         engine.showItemDetails(item)
     }
-    
+
     // MARK: - Background Transition
     func setBackground(imageName: String, animated: Bool = true) {
         if animated && !backgroundImageName.isEmpty {
@@ -57,18 +57,18 @@ final class TransitionOverlayViewModel {
             withAnimation(.easeInOut(duration: 1.0)) {
                 backgroundImageName = imageName
             }
-            
+
             Task { @MainActor in
                 // Descriptive duration API
                 try? await Task.sleep(for: .seconds(1.0))
-                
+
                 self.transitioningToNewImage = false
             }
         } else {
             backgroundImageName = imageName
         }
     }
-    
+
     // MARK: - Overlay Management
     func addCharacterOverlay(nameKey: String, imageName: String) {
         // Prevent double overlays for the same character
@@ -82,15 +82,15 @@ final class TransitionOverlayViewModel {
             }
         }
     }
-    
+
     func removeCharacterOverlay(nameKey: String) {
         characterOverlays.removeAll { $0.nameKey == nameKey }
     }
-    
+
     func removeRoomItemOverlay(nameKey: String) {
         roomItemOverlays.removeAll { $0.nameKey == nameKey }
     }
-    
+
     func addRoomItemOverlay(id: UUID, nameKey: String, imageName: String) {
         let newOverlay = ItemOverlay(id: id, nameKey: nameKey, imageName: imageName, type: .roomItem)
         roomItemOverlays.append(newOverlay)
@@ -100,7 +100,7 @@ final class TransitionOverlayViewModel {
             }
         }
     }
-    
+
     func addInventoryOverlay(id: UUID, nameKey: String, imageName: String) {
         let newOverlay = ItemOverlay(id: id, nameKey: nameKey, imageName: imageName, type: .inventory)
         inventoryOverlays.append(newOverlay)
@@ -110,15 +110,15 @@ final class TransitionOverlayViewModel {
             }
         }
     }
-    
+
     func removeInventoryOverlay(nameKey: String) {
         inventoryOverlays.removeAll { $0.nameKey == nameKey }
     }
-    
+
     func clearInventoryOverlays() {
         inventoryOverlays.removeAll()
     }
-    
+
     func clearAllOverlays() {
         withAnimation(.easeOut(duration: 0.2)) {
             characterOverlays.removeAll()
@@ -126,9 +126,9 @@ final class TransitionOverlayViewModel {
             inventoryOverlays.removeAll()
         }
     }
-    
+
     func interpretCommand(_ input: String) {
         engine.interpretCommand(input)
     }
-    
+
 }

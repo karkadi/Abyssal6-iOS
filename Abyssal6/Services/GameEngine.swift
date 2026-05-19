@@ -50,16 +50,16 @@ final class GameEngine: GameEngineProtocol {
     // MARK: - Published State
     var gameState: GameState = .intro {
         didSet {
+            NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
             if gameState == .playing {
                 startTimer()
-            } else if gameState == .won || gameState == .lost {
-                stopTimer()
             }
         }
     }
     
-    var timeLeft: Int = 600 {
+    private(set) var timeLeft: Int = 600 {
         didSet {
+            NotificationCenter.default.post(name: .timeLeftDidChange, object: nil)
             if timeLeft <= 0 && gameState == .playing {
                 handleGameOver()
             } else if timeLeft == 10 && gameState == .playing {
@@ -78,7 +78,7 @@ final class GameEngine: GameEngineProtocol {
     
     // MARK: - Initialization
     init() {
-        let (startRoom,moving) = Self.createRooms()
+        let (startRoom, moving) = Self.createRooms()
         self.player = Player(startingRoom: startRoom)
         self.player.gameEngine = self
         self.movingCharacters = moving
@@ -91,19 +91,16 @@ final class GameEngine: GameEngineProtocol {
     func startNewGame() {
         gameState = .intro
         timeLeft = 600
-        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     func startMission() {
         gameState = .playing
         playBackgroundMusic("theme")
-        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     func restartGame() {
-        stopTimer()
         // Reinitialize everything
-        let (startRoom,moving) = Self.createRooms()
+        let (startRoom, moving) = Self.createRooms()
         self.player = Player(startingRoom: startRoom)
         self.player.gameEngine = self
         self.movingCharacters = moving
@@ -117,37 +114,24 @@ final class GameEngine: GameEngineProtocol {
     
     func handleVictory() {
         gameState = .won
-        stopTimer()
         playSound("congratulations")
         log(Lang.string("win"))
-        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     func handleGameOver() {
         gameState = .lost
-        stopTimer()
         playSound("explosion")
         log(Lang.string("game_over_message"))
-        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     // MARK: - Timer
-    @MainActor
     private func startTimer() {
-        stopTimer()
-        timerTask = Task { @MainActor in
-            while !Task.isCancelled {
+        Task {
+            while timeLeft > 0 {
                 try? await Task.sleep(for: .seconds(1))
-                guard self.gameState == .playing else { continue }
-                self.timeLeft -= 1
+                timeLeft -= 1
             }
         }
-    }
-    
-    @MainActor
-    private func stopTimer() {
-        timerTask?.cancel()
-        timerTask = nil
     }
     
     // MARK: - World Setup
@@ -232,11 +216,12 @@ final class GameEngine: GameEngineProtocol {
             } else {
                 showTalkDialog()   // instead of posting a notification
             }
-        case "give":  if let argument = argument {
-            giveCommand(itemName: argument)
-        } else {
-            showGiveDialog()   // instead of posting a notification
-        }
+        case "give":
+            if let argument = argument {
+                giveCommand(itemName: argument)
+            } else {
+                showGiveDialog()   // instead of posting a notification
+            }
         case "test":
             guard let argument = argument else {
                 log(Lang.string("test_error_no_file"))
@@ -303,7 +288,6 @@ final class GameEngine: GameEngineProtocol {
         if nextRoom.isReactor {
             // Show puzzle dialog (handled by UI, but we trigger via notification)
             gameState = .puzzle
-            NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
         }
     }
     
@@ -376,7 +360,7 @@ final class GameEngine: GameEngineProtocol {
             log(Lang.string("item_not_in_inventory"))
             return
         }
-        let characters = player.currentRoom.characters.filter { !($0 is Player) }
+        let characters = player.currentRoom.characters
         guard !characters.isEmpty else {
             log(Lang.string("no_characters_here"))
             return
@@ -489,30 +473,29 @@ final class GameEngine: GameEngineProtocol {
         let keyTypes: [ItemType] = [.blueCard, .redCard, .wrench, .divingSuit]
         if keyTypes.contains(item.type) {
             var used = false
-            for direction in Direction.allCases.map({ $0.rawValue }) {
-                if player.currentRoom.hasDoor(in: direction) {
-                    let door = player.currentRoom.getDoor(in: direction)!
-                    if door.requiredKey == item.type {
-                        used = true
-                        if door.isLocked {
-                            if player.currentRoom.unlockDoor(direction: direction, with: item) {
-                                playSound("granted")
-                                log(String(format: Lang.string("door_unlocked_direction"),
-                                           Lang.string(direction)))
-                            } else {
-                                log(Lang.string("wrong_key"))
-                            }
+            for direction in Direction.allCases.map({ $0.rawValue }) where player.currentRoom.hasDoor(in: direction) {
+                let door = player.currentRoom.getDoor(in: direction)!
+                if door.requiredKey == item.type {
+                    used = true
+                    if door.isLocked {
+                        if player.currentRoom.unlockDoor(direction: direction, with: item) {
+                            playSound("granted")
+                            log(String(format: Lang.string("door_unlocked_direction"),
+                                       Lang.string(direction)))
                         } else {
-                            if player.currentRoom.lockDoor(direction: direction, with: item) {
-                                log(String(format: Lang.string("door_locked_direction"),
-                                           Lang.string(direction)))
-                            } else {
-                                log(Lang.string("wrong_key"))
-                            }
+                            log(Lang.string("wrong_key"))
                         }
-                        break
+                    } else {
+                        if player.currentRoom.lockDoor(direction: direction, with: item) {
+                            log(String(format: Lang.string("door_locked_direction"),
+                                       Lang.string(direction)))
+                        } else {
+                            log(Lang.string("wrong_key"))
+                        }
                     }
+                    break
                 }
+                
             }
             if !used {
                 log(Lang.string("no_compatible_door"))
@@ -552,8 +535,6 @@ final class GameEngine: GameEngineProtocol {
     private func quitGame() {
         gameState = .quit
         log(Lang.string("end_game"))
-        stopTimer()
-        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     // MARK: - Save/Load (Stubs)
@@ -665,45 +646,38 @@ final class GameEngine: GameEngineProtocol {
                         log("--- ERROR line \(lineNumber): Should be in '\(expectedRoom)'")
                         passed = false
                     }
-                }
-                else if line.hasPrefix("roomhas ") {
+                } else if line.hasPrefix("roomhas ") {
                     let itemName = line.dropFirst(8).trimmingCharacters(in: .whitespaces)
                     if !verifyRoomHasItem(itemName) {
                         log("--- ERROR line \(lineNumber): Room should contain '\(itemName)'")
                         passed = false
                     }
-                }
-                else if line.hasPrefix("roomhasnot ") {
+                } else if line.hasPrefix("roomhasnot ") {
                     let itemName = line.dropFirst(11).trimmingCharacters(in: .whitespaces)
                     if !verifyRoomHasNotItem(itemName) {
                         log("--- ERROR line \(lineNumber): Room should NOT contain '\(itemName)'")
                         passed = false
                     }
-                }
-                else if line.hasPrefix("playerhas ") {
+                } else if line.hasPrefix("playerhas ") {
                     let itemName = line.dropFirst(10).trimmingCharacters(in: .whitespaces)
                     if !verifyPlayerHasItem(itemName) {
                         log("--- ERROR line \(lineNumber): Player should have '\(itemName)'")
                         passed = false
                     }
-                }
-                else if line.hasPrefix("playerhasnot ") {
+                } else if line.hasPrefix("playerhasnot ") {
                     let itemName = line.dropFirst(13).trimmingCharacters(in: .whitespaces)
                     if !verifyPlayerHasNotItem(itemName) {
                         log("--- ERROR line \(lineNumber): Player should NOT have '\(itemName)'")
                         passed = false
                     }
-                }
-                else if line.hasPrefix("settestmode ") {
+                } else if line.hasPrefix("settestmode ") {
                     let destination = line.dropFirst(12).trimmingCharacters(in: .whitespaces)
                     setTestModeForAllTransporters(destination)
                     log("Test mode set to: \(destination)")
-                }
-                else if line.hasPrefix("cleartestmode") {
+                } else if line.hasPrefix("cleartestmode") {
                     clearTestModeForAllTransporters()
                     log("Test mode cleared")
-                }
-                else {
+                } else {
                     // Normal command
                     log("> \(line)")
                     interpretCommand(line)
@@ -759,7 +733,7 @@ final class GameEngine: GameEngineProtocol {
     }
     
     // MARK: - Static Room Creation
-    private static func createRooms() -> (Room,[MovingCharacter]) {
+    private static func createRooms() -> (Room, [MovingCharacter]) {
         // Same as your existing createRooms() method.
         // (Already provided in the stub, so we reuse it)
         // This is the exact same code you wrote.
@@ -868,7 +842,7 @@ final class GameEngine: GameEngineProtocol {
                                      currentRoom: serre, strategy: .followPlayer)
             .setGreeting("character_stalker_greeting")
         
-        return (sas, [shadow,tech,researcher] )
+        return (sas, [shadow, tech, researcher] )
     }
 }
 
@@ -886,4 +860,5 @@ extension Notification.Name {
     static let showItemDetails = Notification.Name("showItemDetails")
     static let showGiveDialog = Notification.Name("showGiveDialog")
     static let showTalkDialog = Notification.Name("showTalkDialog")
+    static let timeLeftDidChange = Notification.Name("timeLeftDidChange")
 }

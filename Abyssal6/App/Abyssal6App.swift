@@ -12,13 +12,13 @@ struct Abyssal6App: App {
     init() {
         registerSevices()
     }
-    
+
     var body: some Scene {
         WindowGroup {
             RootView()
         }
     }
-    
+
     // Register Services
     private func registerSevices() {
         DIContainer.shared.register(GameEngineProtocol.self) { GameEngine.shared }

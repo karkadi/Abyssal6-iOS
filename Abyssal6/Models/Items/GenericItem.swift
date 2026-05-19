@@ -11,4 +11,3 @@ import Foundation
 final class GenericItem: Item {
     override var information: String { name }
 }
-

@@ -15,10 +15,10 @@ struct ToggleSwitchView: View {
     let offImageName: String
     /// Binding to the current state (true = ON, false = OFF).
     @Binding var isOn: Bool
-    
+
     /// Receives the height scaling factor from parent context
     let scaleFactor: CGFloat
-    
+
     var body: some View {
         Image(isOn ? onImageName : offImageName)
             .resizable()

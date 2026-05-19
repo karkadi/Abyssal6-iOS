@@ -107,6 +107,7 @@
 				5B1D80AD2FB747E2003598CE /* Sources */,
 				5B1D80AE2FB747E2003598CE /* Frameworks */,
 				5B1D80AF2FB747E2003598CE /* Resources */,
+				5B2414C52FBCD0FD001F377B /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -239,6 +240,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		5B2414C52FBCD0FD001F377B /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -x \"/opt/homebrew/bin/swiftlint\" ]; then\n  CONFIG_PATH=\"${PROJECT_DIR}/.swiftlint.yml\"\n  \n  if [ -f \"$CONFIG_PATH\" ]; then\n    /opt/homebrew/bin/swiftlint --config \"$CONFIG_PATH\" --quiet\n  else\n    /opt/homebrew/bin/swiftlint --quiet\n  fi\n  \n  # Always succeed – warnings only\n  echo \"SwiftLint completed (warnings may have been issued)\"\nelse\n  echo \"warning: SwiftLint not found at /opt/homebrew/bin/swiftlint\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		5B1D80AD2FB747E2003598CE /* Sources */ = {
@@ -408,6 +429,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MBM8NLR735;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -439,6 +461,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MBM8NLR735;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

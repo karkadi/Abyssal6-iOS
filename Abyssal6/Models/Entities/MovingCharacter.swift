@@ -60,7 +60,7 @@ final class MovingCharacter: StaticCharacter {
         self.strategy = strategy
         return self
     }
-    
+
     @discardableResult
     func setTargetPlayer(_ player: Player) -> Self {
         self.targetPlayer = player

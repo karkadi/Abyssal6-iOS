@@ -13,7 +13,7 @@ import SwiftUI
 struct RootView: View {
     // MARK: - View Model
     @State private var viewModel = RootViewModel()
-    
+
     var body: some View {
         Group {
             switch viewModel.gameState {
