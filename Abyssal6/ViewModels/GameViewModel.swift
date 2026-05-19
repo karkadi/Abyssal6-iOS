@@ -5,6 +5,7 @@
 //  Created by Arkadiy KAZAZYAN on 15/05/2026.
 //
 import SwiftUI
+import DIContainer
 
 /// The main view model for the game, acting as the bridge between the GameEngine and SwiftUI views.
 /// Uses the `@Observable` macro (iOS 17+) for automatic observation of properties.
@@ -32,9 +33,16 @@ final class GameViewModel {
     var giveDialogData: GiveDialogData? = nil
     var talkDialogCharacters: TalkDialogData? = nil
     var easterEggTorch: Torch? = nil
+       
+    var timeString: String {
+        let seconds: Int = engine.timeLeft
+        let minutes = seconds / 60
+        let secs = seconds % 60
+        return String(format: "%02d:%02d", minutes, secs)
+    }
     
-    var gameOverFlag = false
-    var victoryFlag = false
+    @ObservationIgnored
+    @Injected private var engine: GameEngineProtocol
     
     // MARK: - Initialization
     init() {
@@ -47,16 +55,18 @@ final class GameViewModel {
     }
     
     // MARK: - Public Methods for Views
-    func sendCommand(_ input: String, engine: GameEngine) {
-        appendToTerminal("> \(input)")
+    
+    func interpretCommand(_ input: String) {
         engine.interpretCommand(input)
-        refreshUI(engine)
-        
-        // After each command, refresh inventory popup if open (via notification or delegate)
-        NotificationCenter.default.post(name: .gameStateDidChange, object: nil)
     }
     
-    func refreshUI(_ engine: GameEngine) {
+    func sendCommand(_ input: String) {
+        appendToTerminal("> \(input)")
+        interpretCommand(input)
+        refreshUI()
+    }
+    
+    func refreshUI() {
         currentRoomName = engine.player.currentRoom.shortDescription
         currentRoomImageName = engine.player.currentRoom.imageName
         currentRoomDescription = engine.player.currentRoom.longDescription
@@ -74,20 +84,20 @@ final class GameViewModel {
     }
     
     // MARK: - Inventory Actions
-    func takeItem(_ item: Item, engine: GameEngine) {
-        sendCommand("take \(item.name)", engine: engine)
+    func takeItem(_ item: Item) {
+        sendCommand("take \(item.name)")
     }
     
-    func dropItem(_ item: Item, engine: GameEngine) {
-        sendCommand("drop \(item.name)", engine: engine)
+    func dropItem(_ item: Item) {
+        sendCommand("drop \(item.name)")
     }
     
-    func useItem(_ item: Item, engine: GameEngine) {
-        sendCommand("use \(item.name)", engine: engine)
+    func useItem(_ item: Item) {
+        sendCommand("use \(item.name)")
     }
     
-    func eatItem(_ item: Item, engine: GameEngine) {
-        sendCommand("eat \(item.name)", engine: engine)
+    func eatItem(_ item: Item) {
+        sendCommand("eat \(item.name)")
     }
     
     func showItemDetails(_ item: Item) {
@@ -98,9 +108,9 @@ final class GameViewModel {
         displayedItemForDetails = nil
     }
     
-    func showGiveDialog(player: Player) {
-        let characters = player.currentRoom.characters.filter { !($0 is Player) }
-        let inventory = player.inventory
+    func showGiveDialog() {
+        let characters = engine.player.currentRoom.characters.filter { !($0 is Player) }
+        let inventory = engine.player.inventory
         giveDialogData = GiveDialogData(characters: characters, inventory: inventory)
     }
     
@@ -108,8 +118,8 @@ final class GameViewModel {
         giveDialogData = nil
     }
     
-    func showTalkDialog(player: Player) {
-        let characters = player.currentRoom.characters.filter { !($0 is Player) }
+    func showTalkDialog() {
+        let characters = engine.player.currentRoom.characters.filter { !($0 is Player) }
         talkDialogCharacters = TalkDialogData(characters: characters)
     }
     
@@ -118,30 +128,30 @@ final class GameViewModel {
     }
     
     /// Called when a character is selected from the dialog
-    func talkToCharacter(nameKey: String, engine: GameEngine) {
-        engine.interpretCommand("talk \(nameKey)")
+    func talkToCharacter(nameKey: String) {
+        interpretCommand("talk \(nameKey)")
         dismissTalkDialog()
     }
     
     /// Called when the user selects a character and an item.
-    func giveItemToCharacter(characterNameKey: String?, item: Item?, engine: GameEngine) {
+    func giveItemToCharacter(characterNameKey: String?, item: Item?) {
         guard let charName = characterNameKey, let item = item else {
             engine.log(Lang.string("give_cancelled"))
             return
         }
-        engine.interpretCommand("give \(item.name)")
+        interpretCommand("give \(item.name)")
     }
     
     // MARK: - StaticCharacter Interaction
-    func talkToCharacter(_ character: StaticCharacter, engine: GameEngine) {
-        sendCommand("talk \(character.nameKey)", engine: engine)
+    func talkToCharacter(_ character: StaticCharacter) {
+        sendCommand("talk \(character.nameKey)")
     }
     
-    func giveItemToCharacter(_ character: StaticCharacter, item: Item, engine: GameEngine) {
-        sendCommand("give \(item.name)", engine: engine)
+    func giveItemToCharacter(_ character: StaticCharacter, item: Item) {
+        sendCommand("give \(item.name)")
     }
     
-    func showTalkPopup(for character: StaticCharacter, engine: GameEngine) {
+    func showTalkPopup(for character: StaticCharacter) {
         selectedCharacter = character
         characterInteractionMode = .talk
         showingCharacterInteraction = true
@@ -158,10 +168,10 @@ final class GameViewModel {
     }
     
     // MARK: - Game Control
-    func restartGame(_ engine: GameEngine) {
+    func restartGame() {
         engine.restartGame()
         clearTerminal()
-        refreshUI(engine)
+        refreshUI()
         appendToTerminal(Lang.string("game_restarted"))
     }
     

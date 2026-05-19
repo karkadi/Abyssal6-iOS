@@ -40,10 +40,7 @@ final class TerminalViewModel {
                 let index = self.pendingText.index(self.pendingText.startIndex, offsetBy: self.currentIndex)
                 self.fullText.append(self.pendingText[index])
                 self.currentIndex += 1
-                if soundEnabled {
-                    // Play typewriter sound (you can implement a sound service)
-                 //   SoundService.shared.playTypewriter()
-                }
+
             } else {
                 self.fullText.append("\n")
                 self.stopTypewriter()

@@ -12,7 +12,6 @@ import SwiftUI
 struct TransitionOverlayView: View {
     @Binding var currentBackground: String
     @Binding var viewModel: TransitionOverlayViewModel
-    @Environment(GameEngine.self) private var engine
     
     let scaleFactor: CGFloat // Receives spatial scaling factor constraints from parent view context
     
@@ -87,11 +86,11 @@ struct TransitionOverlayView: View {
         if let character = findCharacter(byNameKey: overlay.nameKey)  {
             Group {
                 Button(Lang.string("talk_button")) {
-                    engine.interpretCommand("talk \(character.nameKey)")
+                    viewModel.interpretCommand("talk \(character.nameKey)")
                 }
                 if !character.exchangeItems.isEmpty {
                     Button(Lang.string("give_button")) {
-                        engine.interpretCommand("give")
+                        viewModel.interpretCommand("give")
                     }
                 }
             }
@@ -104,24 +103,24 @@ struct TransitionOverlayView: View {
     private func contextMenu(for overlay: ItemOverlay) -> some View {
         if let item = findItem(byId: overlay.id, type: overlay.type) {
             Group {
-                Button(Lang.string("inspect")) { engine.showItemDetails(item) }
+                Button(Lang.string("inspect")) { viewModel.showItemDetails(item) }
                 Divider()
                 if overlay.type == .roomItem && item.canBePickedUp {
-                    Button(Lang.string("take")) { engine.interpretCommand("take \(item.name)") }
+                    Button(Lang.string("take")) { viewModel.interpretCommand("take \(item.name)") }
                 } else if overlay.type == .inventory {
-                    Button(Lang.string("drop")) { engine.interpretCommand("drop \(item.name)") }
+                    Button(Lang.string("drop")) { viewModel.interpretCommand("drop \(item.name)") }
                     if item.isUsable {
-                        Button(Lang.string("use")) { engine.interpretCommand("use \(item.name)") }
+                        Button(Lang.string("use")) { viewModel.interpretCommand("use \(item.name)") }
                     }
                     if item.type == .magicCookie {
-                        Button(Lang.string("eat")) { engine.interpretCommand("eat \(item.name)") }
+                        Button(Lang.string("eat")) { viewModel.interpretCommand("eat \(item.name)") }
                     }
                     if let beamer = item as? Beamer {
                         Divider()
                         if !beamer.isCharged {
-                            Button(Lang.string("charge")) { engine.interpretCommand("charge") }
+                            Button(Lang.string("charge")) { viewModel.interpretCommand("charge") }
                         } else {
-                            Button(Lang.string("fire")) { engine.interpretCommand("fire") }
+                            Button(Lang.string("fire")) { viewModel.interpretCommand("fire") }
                         }
                     }
                 }
@@ -145,32 +144,32 @@ struct TransitionOverlayView: View {
     }
     
     private func loadCharactersFromCurrentRoom() {
-        for character in engine.player.currentRoom.characters {
+        for character in viewModel.player.currentRoom.characters {
             viewModel.addCharacterOverlay(nameKey: character.nameKey, imageName: character.nameKey)
         }
     }
     
     private func loadRoomItemsFromCurrentRoom() {
-        for item in engine.player.currentRoom.items {
+        for item in viewModel.player.currentRoom.items {
             viewModel.addRoomItemOverlay(id: item.id, nameKey: item.name, imageName: item.imageName)
         }
     }
     
     private func loadInventoryItems() {
-        for item in engine.player.inventory {
+        for item in viewModel.player.inventory {
             viewModel.addInventoryOverlay(id: item.id, nameKey: item.name, imageName: item.imageName)
         }
     }
     
     private func findCharacter(byNameKey nameKey: String) -> StaticCharacter? {
-        return engine.player.currentRoom.characters.first { $0.nameKey == nameKey }
+        return viewModel.player.currentRoom.characters.first { $0.nameKey == nameKey }
     }
     
     private func findItem(byId id: UUID, type: ItemOverlay.ItemOverlayType) -> Item? {
         if type == .roomItem {
-            return engine.player.currentRoom.items.first { $0.id == id }
+            return viewModel.player.currentRoom.items.first { $0.id == id }
         } else {
-            return engine.player.inventory.first { $0.id == id }
+            return viewModel.player.inventory.first { $0.id == id }
         }
     }
     
@@ -244,5 +243,4 @@ struct TransitionOverlayView: View {
     return TransitionOverlayView(currentBackground: .constant("sas.gif"), viewModel: .constant(vm), scaleFactor: 1.0)
         .frame(width: 900, height: 680)
         .background(Color.black)
-        .environment(GameEngine())
 }

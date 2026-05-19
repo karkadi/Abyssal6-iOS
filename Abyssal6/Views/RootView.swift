@@ -11,11 +11,12 @@ import SwiftUI
 // ─────────────────────────────────────────────────────────────
 
 struct RootView: View {
-    @Environment(GameEngine.self) private var engine
+    // MARK: - View Model
+    @State private var viewModel = RootViewModel()
     
     var body: some View {
         Group {
-            switch engine.gameState {
+            switch viewModel.gameState {
             case .intro:
                 IntroView()
             case .playing:
@@ -23,9 +24,9 @@ struct RootView: View {
             case .puzzle:
                 ReactorPuzzleView()
             case .won:
-                EndView(isVictory: true, onNewGame: { engine.restartGame() })
+                EndView(isVictory: true, onNewGame: { viewModel.restartGame() })
             case .lost:
-                EndView(isVictory: false, onNewGame: { engine.restartGame() })
+                EndView(isVictory: false, onNewGame: { viewModel.restartGame() })
             case .quit:
                 IntroView()
             @unknown default:
@@ -33,10 +34,14 @@ struct RootView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onReceive(NotificationCenter.default.publisher(for: .gameStateDidChange)) { notification in
+            if let state = notification.object as? GameState {
+                viewModel.gameState = state
+            }
+        }
     }
 }
 
 #Preview {
     RootView()
-        .environment(GameEngine())
 }

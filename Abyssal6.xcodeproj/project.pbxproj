@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5B2414582FBC9E9E001F377B /* DIContainer in Frameworks */ = {isa = PBXBuildFile; productRef = 5B2414572FBC9E9E001F377B /* DIContainer */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		5B1D80BF2FB747E3003598CE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B2414582FBC9E9E001F377B /* DIContainer in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = Abyssal6;
 			packageProductDependencies = (
+				5B2414572FBC9E9E001F377B /* DIContainer */,
 			);
 			productName = Abyssal6;
 			productReference = 5B1D80B12FB747E2003598CE /* Abyssal6.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 5B1D80A82FB747E2003598CE;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5B2414562FBC9E9E001F377B /* XCLocalSwiftPackageReference "Packages/DIContainer" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5B1D80B22FB747E2003598CE /* Products */;
 			projectDirPath = "";
@@ -576,6 +585,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5B2414562FBC9E9E001F377B /* XCLocalSwiftPackageReference "Packages/DIContainer" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/DIContainer;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5B2414572FBC9E9E001F377B /* DIContainer */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DIContainer;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5B1D80A92FB747E2003598CE /* Project object */;
 }

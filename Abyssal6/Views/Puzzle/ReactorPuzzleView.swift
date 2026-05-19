@@ -11,7 +11,6 @@ import SwiftUI
 struct ReactorPuzzleView: View {
     // MARK: - Environment
     @Environment(\.dismiss) private var dismiss
-    @Environment(GameEngine.self) private var engine
     
     // MARK: - View Model
     @State private var viewModel = PuzzleViewModel()
@@ -108,9 +107,9 @@ struct ReactorPuzzleView: View {
             viewModel.onValidationResult = { success in
                 dismiss()
                 if success {
-                    engine.handleVictory()
+                    viewModel.handleVictory()
                 } else {
-                    engine.handleGameOver()
+                    viewModel.handleGameOver()
                 }
             }
         }
@@ -126,5 +125,4 @@ struct ReactorPuzzleView: View {
 // MARK: - Preview
 #Preview {
     ReactorPuzzleView()
-        .environment(GameEngine())
 }

@@ -11,7 +11,6 @@ import SwiftUI
 struct MainGameView: View {
     @State private var viewModel = GameViewModel()
     @State private var commandInput: String = ""
-    @Environment(GameEngine.self) private var engine
     
     // Baseline reference height standard matching secondary puzzle views
     private let refHeight: CGFloat = 680
@@ -46,7 +45,7 @@ struct MainGameView: View {
                         Image(systemName: "timer")
                             .foregroundColor(.abyssalAccent)
                             .font(.system(size: 18 * scaleY))
-                        Text(timeString(from: engine.timeLeft))
+                        Text(viewModel.timeString)
                             .font(.system(size: 20 * scaleY, weight: .regular, design: .monospaced))
                             .foregroundColor(.abyssalAccent)
                         Spacer()
@@ -60,7 +59,7 @@ struct MainGameView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12 * scaleY) {
                         ForEach(directionButtons, id: \.title) { button in
                             AbyssalButton(title: button.title, color: .abyssalAccent) {
-                                viewModel.sendCommand(button.command, engine: engine)
+                                viewModel.sendCommand(button.command)
                             }
                             .frame(height: 50 * scaleY)
                             .font(.system(size: 14 * scaleY))
@@ -95,11 +94,11 @@ struct MainGameView: View {
                                 if button.action == .inventory {
                                     viewModel.showingInventory = true
                                 } else if button.action == .talk {
-                                    viewModel.showTalkDialog(player: engine.player)
+                                    viewModel.showTalkDialog()
                                 } else if button.action == .give {
-                                    viewModel.showGiveDialog(player: engine.player)
+                                    viewModel.showGiveDialog()
                                 } else {
-                                    viewModel.sendCommand(button.command, engine: engine)
+                                    viewModel.sendCommand(button.command)
                                 }
                             }
                             .frame(height: 50 * scaleY)
@@ -115,22 +114,22 @@ struct MainGameView: View {
             }
             .padding(12 * scaleY)
             .background(Color.abyssalBg.ignoresSafeArea())
-           
+            
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
-            viewModel.refreshUI(engine)
+            viewModel.refreshUI()
         }
         .sheet(isPresented: $viewModel.showingInventory) {
             InventoryView(items: viewModel.inventoryItems, roomItems: viewModel.roomItems) { item, action in
                 switch action {
-                case .take: viewModel.takeItem(item, engine: engine)
-                case .drop: viewModel.dropItem(item, engine: engine)
-                case .use: viewModel.useItem(item, engine: engine)
-                case .eat: viewModel.eatItem(item, engine: engine)
+                case .take: viewModel.takeItem(item)
+                case .drop: viewModel.dropItem(item)
+                case .use: viewModel.useItem(item)
+                case .eat: viewModel.eatItem(item)
                 case .inspect: viewModel.showItemDetails(item)
-                case .charge: viewModel.sendCommand("charge", engine: engine)
-                case .fire: viewModel.sendCommand("fire", engine: engine)
+                case .charge: viewModel.sendCommand("charge")
+                case .fire: viewModel.sendCommand("fire")
                 }
                 viewModel.showingInventory = false
             }
@@ -143,9 +142,9 @@ struct MainGameView: View {
                     inventory: viewModel.inventoryItems
                 ) { selectedItem in
                     if viewModel.characterInteractionMode == .talk {
-                        viewModel.talkToCharacter(character, engine: engine)
+                        viewModel.talkToCharacter(character)
                     } else if let item = selectedItem {
-                        viewModel.giveItemToCharacter(character, item: item, engine: engine)
+                        viewModel.giveItemToCharacter(character, item: item)
                     }
                     viewModel.showingCharacterInteraction = false
                 }
@@ -155,29 +154,29 @@ struct MainGameView: View {
             ItemDetailsView(item: item) { action in
                 switch action {
                 case .use:
-                    engine.interpretCommand("use \(item.name)")
+                    viewModel.interpretCommand("use \(item.name)")
                 case .eat:
-                    engine.interpretCommand("eat \(item.name)")
+                    viewModel.interpretCommand("eat \(item.name)")
                 case .charge:
-                    engine.interpretCommand("charge")
+                    viewModel.interpretCommand("charge")
                 case .fire:
-                    engine.interpretCommand("fire")
-                    viewModel.refreshUI(engine)
+                    viewModel.interpretCommand("fire")
+                    viewModel.refreshUI()
                 case .drop:
-                    engine.interpretCommand("drop \(item.name)")
+                    viewModel.interpretCommand("drop \(item.name)")
                 }
                 viewModel.dismissItemDetails()
             }
         }
         .sheet(item: $viewModel.giveDialogData) { data in
             GiveDialogView(characters: data.characters, inventory: data.inventory) { characterNameKey, item in
-                viewModel.giveItemToCharacter(characterNameKey: characterNameKey, item: item, engine: engine)
+                viewModel.giveItemToCharacter(characterNameKey: characterNameKey, item: item)
                 viewModel.dismissGiveDialog()
             }
         }
         .sheet(item: $viewModel.talkDialogCharacters) { data in
             TalkDialogView(characters: data.characters) { nameKey in
-                viewModel.talkToCharacter(nameKey: nameKey, engine: engine)
+                viewModel.talkToCharacter(nameKey: nameKey)
             }
         }
         .fullScreenCover(item: $viewModel.easterEggTorch) { torch in
@@ -185,32 +184,16 @@ struct MainGameView: View {
                 viewModel.easterEggTorch = nil
             }
         }
-        .alert("Game Over", isPresented: $viewModel.gameOverFlag) {
-            Button("New Game") { viewModel.restartGame(engine) }
-            Button("Quit") { viewModel.quitGame() }
-        } message: {
-            Text(Lang.string("game_over_message"))
-        }
-        .alert("Victory", isPresented: $viewModel.victoryFlag) {
-            Button("New Game") { viewModel.restartGame(engine) }
-            Button("Quit") { viewModel.quitGame() }
-        } message: {
-            Text(Lang.string("victory_message"))
-        }
         .onReceive(NotificationCenter.default.publisher(for: .showItemDetails)) { notification in
             if let item = notification.object as? Item {
                 viewModel.showItemDetails(item)
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .showGiveDialog)) { notification in
-            if let player = notification.object as? Player {
-                viewModel.showGiveDialog(player: player)
-            }
+        .onReceive(NotificationCenter.default.publisher(for: .showGiveDialog)) { _ in
+            viewModel.showGiveDialog()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .showTalkDialog)) { notification in
-            if let player = notification.object as? Player {
-                viewModel.showTalkDialog(player: player)
-            }
+        .onReceive(NotificationCenter.default.publisher(for: .showTalkDialog)) { _ in
+            viewModel.showTalkDialog()
         }
         .onReceive(NotificationCenter.default.publisher(for: .showEasterEgg)) { notification in
             if let torch = notification.object as? Torch {
@@ -221,14 +204,8 @@ struct MainGameView: View {
     
     private func sendCommand() {
         guard !commandInput.isEmpty else { return }
-        viewModel.sendCommand(commandInput, engine: engine)
+        viewModel.sendCommand(commandInput)
         commandInput = ""
-    }
-    
-    private func timeString(from seconds: Int) -> String {
-        let minutes = seconds / 60
-        let secs = seconds % 60
-        return String(format: "%02d:%02d", minutes, secs)
     }
     
     // MARK: - Button Definitions
@@ -273,5 +250,4 @@ struct MainGameView: View {
 
 #Preview {
     MainGameView()
-        .environment(GameEngine())
 }

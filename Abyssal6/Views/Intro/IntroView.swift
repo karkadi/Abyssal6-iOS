@@ -22,10 +22,12 @@ extension Color {
 // MARK: – Main Intro View (with animations)
 
 struct IntroView: View {
-    @Environment(GameEngine.self) private var engine
     @State private var titleOpacity: Double = 1.0
     @State private var showTypewriter = false
     @State private var startGameFlag = false
+    
+    // MARK: - View Model
+    @State private var viewModel = IntroViewModel()
     
     // Core canvas reference height matching the game engine layout standards
     private let refHeight: CGFloat = 680
@@ -35,7 +37,7 @@ struct IntroView: View {
         withAnimation(.easeOut(duration: 0.3)) {
             titleOpacity = 0
             startGameFlag = true
-            engine.stopBackgroundMusic()
+            viewModel.stopBackgroundMusic()
         }
     }
     
@@ -83,11 +85,10 @@ struct IntroView: View {
                     // Typewriter text – appears only after title starts fading
                     if showTypewriter && !startGameFlag {
                         TypewriterText(Lang.string("introduction"), scaleY: scaleY) {
-                            engine.playBackgroundMusic("typewriter")
+                            viewModel.playBackgroundMusic("typewriter")
                         } onComplete: {
-                            engine.stopBackgroundMusic()
+                            viewModel.stopBackgroundMusic()
                         }
-                        
                     }
                     
                     Spacer()
@@ -115,7 +116,7 @@ struct IntroView: View {
         // When startGameFlag becomes true, notify the engine
         .onChange(of: startGameFlag) { _, newValue in
             if newValue {
-                engine.startMission()
+                viewModel.startMission()
             }
         }
     }
@@ -125,5 +126,4 @@ struct IntroView: View {
 
 #Preview {
     IntroView()
-        .environment(GameEngine())
 }

@@ -5,6 +5,7 @@
 //  Created by Arkadiy KAZAZYAN on 15/05/2026.
 //
 import SwiftUI
+import DIContainer
 
 // MARK: - Overlay Types
 
@@ -37,6 +38,17 @@ final class TransitionOverlayViewModel {
     private(set) var roomItemOverlays: [ItemOverlay] = []
     private(set) var inventoryOverlays: [ItemOverlay] = []
     private var transitioningToNewImage = false
+    
+    @ObservationIgnored
+    @Injected private var engine: GameEngineProtocol
+    
+    var player: Player {
+        return engine.player
+    }
+    
+    func showItemDetails(_ item: Item) {
+        engine.showItemDetails(item)
+    }
     
     // MARK: - Background Transition
     func setBackground(imageName: String, animated: Bool = true) {
@@ -114,4 +126,9 @@ final class TransitionOverlayViewModel {
             inventoryOverlays.removeAll()
         }
     }
+    
+    func interpretCommand(_ input: String) {
+        engine.interpretCommand(input)
+    }
+    
 }

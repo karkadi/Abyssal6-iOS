@@ -4,7 +4,30 @@
 //
 //  Created by Arkadiy KAZAZYAN on 15/05/2026.
 //
+
+// GameEngineProtocol.swift
 import Foundation
+
+@MainActor
+protocol GameEngineProtocol: AnyObject, Sendable {
+    var gameState: GameState { get set }
+    var timeLeft: Int { get }
+    var player: Player { get }
+    
+    func startNewGame()
+    func startMission()
+    func restartGame()
+    func handleVictory()
+    func handleGameOver()
+    func interpretCommand(_ input: String)
+    func log(_ message: String)
+    func playSound(_ soundFile: String)
+    func playBackgroundMusic(_ file: String)
+    func stopBackgroundMusic()
+    func refreshInventory()
+    func showTalkDialog()
+    func showItemDetails(_ item: Item)
+}
 
 // MARK: – GameState
 
@@ -19,8 +42,11 @@ enum GameState {
 
 // MARK: – GameEngine
 
-@Observable
-final class GameEngine {
+@MainActor
+final class GameEngine: GameEngineProtocol {
+    
+    static let shared = GameEngine()
+    
     // MARK: - Published State
     var gameState: GameState = .intro {
         didSet {
@@ -31,6 +57,7 @@ final class GameEngine {
             }
         }
     }
+    
     var timeLeft: Int = 600 {
         didSet {
             if timeLeft <= 0 && gameState == .playing {
@@ -64,11 +91,13 @@ final class GameEngine {
     func startNewGame() {
         gameState = .intro
         timeLeft = 600
+        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     func startMission() {
         gameState = .playing
         playBackgroundMusic("theme")
+        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     func restartGame() {
@@ -91,6 +120,7 @@ final class GameEngine {
         stopTimer()
         playSound("congratulations")
         log(Lang.string("win"))
+        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     func handleGameOver() {
@@ -98,6 +128,7 @@ final class GameEngine {
         stopTimer()
         playSound("explosion")
         log(Lang.string("game_over_message"))
+        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     // MARK: - Timer
@@ -154,7 +185,7 @@ final class GameEngine {
         }
         return result
     }
-        
+    
     // MARK: - Character Movement
     func moveAllCharacters() {
         for character in movingCharacters {
@@ -225,7 +256,6 @@ final class GameEngine {
         }
         
         moveAllCharacters()
-        NotificationCenter.default.post(name: .gameStateDidChange, object: nil)
     }
     
     // MARK: - Movement Commands
@@ -273,6 +303,7 @@ final class GameEngine {
         if nextRoom.isReactor {
             // Show puzzle dialog (handled by UI, but we trigger via notification)
             gameState = .puzzle
+            NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
         }
     }
     
@@ -522,6 +553,7 @@ final class GameEngine {
         gameState = .quit
         log(Lang.string("end_game"))
         stopTimer()
+        NotificationCenter.default.post(name: .gameStateDidChange, object: gameState)
     }
     
     // MARK: - Save/Load (Stubs)
@@ -556,12 +588,12 @@ final class GameEngine {
     
     private func showGiveDialog() {
         NotificationCenter.default.post(name: .showGiveDialog,
-                                        object: player)
+                                        object: nil)
     }
     
     func showTalkDialog() {
         NotificationCenter.default.post(name: .showTalkDialog,
-                                        object: player)
+                                        object: nil)
     }
     
     func refreshInventory() {
@@ -821,20 +853,20 @@ final class GameEngine {
             .addExchange(givenType: .firstAid, receivedItem: ItemType.redCard.createItem(), messageKey: "character_geneticist_exchange")
         
         let tech = MovingCharacter(nameKey: "character_wandering_tech", descriptionKey: "character_wandering_tech_desc",
-                        currentRoom: hydroponics, strategy: .random)
-        .setGreeting("character_wandering_tech_greeting")
-        .addItemResponse(item: ItemType.wrench.createItem(), responseKey: "character_wandering_tech_wrench")
+                                   currentRoom: hydroponics, strategy: .random)
+            .setGreeting("character_wandering_tech_greeting")
+            .addItemResponse(item: ItemType.wrench.createItem(), responseKey: "character_wandering_tech_wrench")
         
         let path: [Room] = [sas, airlock, dortoir, infirmerie, hydroponics, observation]
         let researcher = MovingCharacter(nameKey: "character_researcher", descriptionKey: "character_researcher_desc",
-                        currentRoom: sas, strategy: .followPath)
-        .setPath(path)
-        .setGreeting("character_researcher_greeting")
-        .addItemResponse(item: ItemType.wrench.createItem(), responseKey: "character_wandering_tech_wrench")
+                                         currentRoom: sas, strategy: .followPath)
+            .setPath(path)
+            .setGreeting("character_researcher_greeting")
+            .addItemResponse(item: ItemType.wrench.createItem(), responseKey: "character_wandering_tech_wrench")
         
         let shadow = MovingCharacter(nameKey: "character_stalker", descriptionKey: "character_stalker_desc",
-                        currentRoom: serre, strategy: .followPlayer)
-        .setGreeting("character_stalker_greeting")
+                                     currentRoom: serre, strategy: .followPlayer)
+            .setGreeting("character_stalker_greeting")
         
         return (sas, [shadow,tech,researcher] )
     }
