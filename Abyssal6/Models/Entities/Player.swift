@@ -5,6 +5,7 @@
 //  Created by Arkadiy KAZAZYAN on 15/05/2026.
 //
 import Foundation
+import DIContainer
 
 /// The player character – holds inventory, weight limit, room history, and game engine reference.
 @Observable
@@ -15,7 +16,9 @@ final class Player: Identifiable {
     private(set) var maxWeight: Int = 13000      // grams
     private(set) var currentWeight: Int = 0
     private var roomHistory: [Room] = []         // last element is the current room
-    weak var gameEngine: GameEngine?
+
+    @ObservationIgnored
+    @Injected private var engine: GameEngineProtocol
 
     // MARK: - Initialization
     init(startingRoom: Room) {
@@ -38,8 +41,14 @@ final class Player: Identifiable {
         }
         inventory.append(item)
         currentWeight += item.weight
-        gameEngine?.refreshInventory()
+        engine.refreshInventory()
         return item
+    }
+
+    func appendItem(_ item: Item) {
+        inventory.append(item)
+        currentWeight += item.weight
+        engine.refreshInventory()
     }
 
     @discardableResult
@@ -50,7 +59,7 @@ final class Player: Identifiable {
         let item = inventory.remove(at: index)
         currentWeight -= item.weight
         currentRoom.addItem(item)
-        gameEngine?.refreshInventory()
+        engine.refreshInventory()
         return item
     }
 
@@ -61,7 +70,7 @@ final class Player: Identifiable {
         }
         let item = inventory.remove(at: index)
         currentWeight -= item.weight
-        gameEngine?.refreshInventory()
+        engine.refreshInventory()
         return item
     }
 
@@ -103,7 +112,7 @@ final class Player: Identifiable {
         currentWeight -= givenItem.weight
         inventory.append(receivedItem)
         currentWeight += receivedItem.weight
-        gameEngine?.refreshInventory()
+        engine.refreshInventory()
         return true
     }
 
@@ -127,7 +136,7 @@ final class Player: Identifiable {
         guard currentRoom.isExit(previousRoom) else { return false }
         roomHistory.removeLast()
         currentRoom = previousRoom
-        gameEngine?.setPlayerRoom(currentRoom)
+        engine.setPlayerRoom(currentRoom)
         return true
     }
 

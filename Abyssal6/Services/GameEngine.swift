@@ -27,6 +27,7 @@ protocol GameEngineProtocol: AnyObject, Sendable {
     func refreshInventory()
     func showTalkDialog()
     func showItemDetails(_ item: Item)
+    func setPlayerRoom(_ room: Room)
 }
 
 // MARK: – GameState
@@ -80,7 +81,6 @@ final class GameEngine: GameEngineProtocol {
     init() {
         let (startRoom, moving) = Self.createRooms()
         self.player = Player(startingRoom: startRoom)
-        self.player.gameEngine = self
         self.movingCharacters = moving
         moving.first?.setTargetPlayer(player)
         setupGameWorld()
@@ -102,7 +102,6 @@ final class GameEngine: GameEngineProtocol {
         // Reinitialize everything
         let (startRoom, moving) = Self.createRooms()
         self.player = Player(startingRoom: startRoom)
-        self.player.gameEngine = self
         self.movingCharacters = moving
         moving.first?.setTargetPlayer(player)
         setupGameWorld()
@@ -537,26 +536,6 @@ final class GameEngine: GameEngineProtocol {
         log(Lang.string("end_game"))
     }
 
-    // MARK: - Save/Load (Stubs)
-    private func saveGame(name: String?) {
-        guard let name = name else {
-            log(Lang.string("save_usage"))
-            return
-        }
-        // For now, just log
-        log(String(format: Lang.string("save_success"), name))
-    }
-
-    private func loadGame(name: String?) {
-        guard let name = name else {
-            log(Lang.string("load_usage"))
-            return
-        }
-        log(String(format: Lang.string("load_loading"), name))
-        // Stub – would call GameLoaderXML equivalent
-        log(Lang.string("load_error_xml"))
-    }
-
     // MARK: - UI Helpers
     func setPlayerRoom(_ room: Room) {
         player.setCurrentRoom(room)
@@ -709,7 +688,45 @@ final class GameEngine: GameEngineProtocol {
             (room as? TransporterRoom)?.clearForcedDestination()
         }
     }
+    // MARK: - Save/Load
 
+    func saveGame(name: String?) {
+        guard let name = name, !name.isEmpty else {
+            log(Lang.string("save_usage"))
+            return
+        }
+        _ = SaveGameManager.save(gameEngine: self, name: name)
+    }
+
+    func loadGame(name: String?) {
+        guard let name = name, !name.isEmpty else {
+            log(Lang.string("load_usage"))
+            return
+        }
+        _ = SaveGameManager.load(gameEngine: self, name: name)
+    }
+
+    func replaceWith(player: Player, allRooms: [Room], movingCharacters: [MovingCharacter], timeLeft: Int) {
+        self.player = player
+        self.allRooms = allRooms
+        self.movingCharacters = movingCharacters
+        self.timeLeft = timeLeft
+
+        // Re-initialize transporter destinations
+        for room in allRooms {
+            if let transporter = room as? TransporterRoom {
+                transporter.initializeDestinations(allRooms)
+            }
+        }
+
+        // Refresh UI
+        refreshInventory()
+        NotificationCenter.default.post(name: .roomDidChange, object: player.currentRoom)
+        log(player.currentRoom.longDescription)
+        if gameState != .playing {
+            gameState = .playing
+        }
+    }
     // MARK: - Test helpers
 
     private func verifyCurrentRoom(_ expectedRoomKey: String) -> Bool {
@@ -733,7 +750,7 @@ final class GameEngine: GameEngineProtocol {
     }
 
     // MARK: - Static Room Creation
-    private static func createRooms() -> (Room, [MovingCharacter]) {
+    static func createRooms() -> (Room, [MovingCharacter]) {
         // Same as your existing createRooms() method.
         // (Already provided in the stub, so we reuse it)
         // This is the exact same code you wrote.

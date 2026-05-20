@@ -14,11 +14,11 @@ struct ReactorPuzzleView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     // MARK: - View Model
     @State private var viewModel = PuzzleViewModel()
-    
+
     // Canvas reference properties matching original dimensions
     private let refWidth: CGFloat = 900
     private let refHeight: CGFloat = 680
-    
+
     // Base reference layout positions
     private var baseSwitchesStartX: CGFloat {
         horizontalSizeClass == .regular ? 208.0 : 210.0
@@ -36,18 +36,18 @@ struct ReactorPuzzleView: View {
         horizontalSizeClass == .regular ? 424 : 422
     }
     private let buttonDiameter: CGFloat = 50
-    
+
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
             // Calculate a single scaling factor based entirely on screen height
             let scaleY = geometry.size.height / refHeight
-            
+
             // Calculate an X-offset to center your content container if the screen width
             // is aspect-ratio wider than the height-scaled content canvas
             let canvasScaledWidth = refWidth * scaleY
             let horizontalOffset = (geometry.size.width - canvasScaledWidth) / 2
-            
+
             ZStack {
                 // Background
                 Color.abyssalBg
@@ -66,9 +66,9 @@ struct ReactorPuzzleView: View {
                         .font(.system(size: 28 * scaleY, weight: .bold, design: .monospaced))
                         .foregroundColor(.abyssalAccent)
                         .padding(.top, 2 * scaleY)
-                    
+
                     Spacer()
-                    
+
                     // Instruction text (Scaled dynamically based on height)
                     Text(Lang.string("puzzle"))
                         .font(.system(size: max(10, 16 * scaleY), design: .monospaced))
@@ -79,13 +79,13 @@ struct ReactorPuzzleView: View {
                         .padding(.bottom, 12 * scaleY)
                 }
                 .ignoresSafeArea()
-                
+
                 // 8 Switches arranged uniformly using the height scale aspect ratios
                 ForEach(0..<viewModel.switchStates.count, id: \.self) { index in
                     let rawX = baseSwitchesStartX + CGFloat(index) * baseSwitchesSpacingX
                     let scaledX = (rawX * scaleY) + horizontalOffset
                     let scaledY = baseSwitchesY * scaleY
-                    
+
                     ToggleSwitchView(
                         onImageName: "on",
                         offImageName: "off",
@@ -94,7 +94,7 @@ struct ReactorPuzzleView: View {
                     )
                     .position(x: scaledX, y: scaledY)
                 }
-                
+
                 // Validate button scaled uniformly based on height scale factor
                 Button(action: validateAndCheck) {
                     ZStack {
@@ -125,7 +125,7 @@ struct ReactorPuzzleView: View {
         }
         .interactiveDismissDisabled(true)
     }
-    
+
     // MARK: - Actions
     private func validateAndCheck() {
         viewModel.validateSolution()

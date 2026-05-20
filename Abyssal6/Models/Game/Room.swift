@@ -13,6 +13,10 @@ struct Door {
     let requiredKey: ItemType
     var isLocked: Bool
     let autoLock: Bool
+
+    mutating func setLocked(_ locked: Bool) {
+        self.isLocked = locked
+    }
 }
 
 // MARK: - Room Class

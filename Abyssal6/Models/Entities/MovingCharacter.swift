@@ -50,6 +50,7 @@ final class MovingCharacter: StaticCharacter {
     }
 
     // MARK: - Strategy Configuration
+    @discardableResult
     func setPath(_ path: [Room]) -> Self {
         self.path = path
         self.strategy = .followPath
