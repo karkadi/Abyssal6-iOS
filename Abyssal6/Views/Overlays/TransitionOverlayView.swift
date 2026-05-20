@@ -12,11 +12,14 @@ import SwiftUI
 struct TransitionOverlayView: View {
     @Binding var currentBackground: String
     @Binding var viewModel: TransitionOverlayViewModel
-    
+    @State private var showMenu = false
+    @State private var menuCharacter: StaticCharacter?
+    @State private var menuItem: (item: Item, type: ItemOverlay.ItemOverlayType)?
+
     let scaleFactor: CGFloat // Receives spatial scaling factor constraints from parent view context
-    
+
     private let remoteImageBaseURL = "https://kazazyanalexander.github.io/Abyssale-6/images/"
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -28,21 +31,21 @@ struct TransitionOverlayView: View {
                     .transition(.opacity)
                     .id(viewModel.backgroundImageName)
                     .animation(.easeInOut(duration: 0.5), value: viewModel.backgroundImageName)
-                
+
                 // Character overlays (scaled sizes)
                 ForEach(viewModel.characterOverlays) { overlay in
                     characterImageView(for: overlay)
                         .opacity(overlay.alpha)
                         .position(positionForCharacter(overlay, geometry: geometry))
                 }
-                
+
                 // Room item overlays (scaled sizes)
                 ForEach(viewModel.roomItemOverlays) { overlay in
                     itemImageView(for: overlay)
                         .opacity(overlay.alpha)
                         .position(positionForRoomItem(overlay, geometry: geometry))
                 }
-                
+
                 // Inventory item overlays (scaled sizes)
                 ForEach(viewModel.inventoryOverlays) { overlay in
                     itemImageView(for: overlay)
@@ -50,10 +53,41 @@ struct TransitionOverlayView: View {
                         .position(positionForInventoryItem(overlay, geometry: geometry))
                 }
             }
+            .overlay(
+                Group {
+                    if let character = viewModel.calloutCharacter {
+                        CharacterCalloutView(character: character) {
+                            viewModel.dismissCallout()
+                        }
+                        .transition(.opacity)
+                    }
+                }
+            )
+            .overlay(
+                Group {
+                    if showMenu {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                showMenu = false
+                            }
+                            .overlay(
+                                ContextMenuView(
+                                    character: menuCharacter,
+                                    item: menuItem,
+                                    onAction: { action in
+                                        handleMenuAction(action)
+                                        showMenu = false
+                                    }
+                                ), alignment: menuAlignment)
+                    }
+                }
+            )
         }
         .onAppear {
             viewModel.setBackground(imageName: currentBackground)
             refreshAllOverlays()
+            viewModel.showCalloutsForCurrentRoom()
         }
         .onChange(of: currentBackground) { _, newImage in
             viewModel.setBackground(imageName: newImage)
@@ -62,7 +96,9 @@ struct TransitionOverlayView: View {
             if let room = notification.object as? Room {
                 viewModel.setBackground(imageName: room.imageName)
             }
+            showMenu = false
             refreshAllOverlays()
+            viewModel.showCalloutsForCurrentRoom()
         }
         .onReceive(NotificationCenter.default.publisher(for: .inventoryDidChange)) { _ in
             refreshInventoryOverlays()
@@ -79,57 +115,52 @@ struct TransitionOverlayView: View {
             }
         }
     }
-    
-    // MARK: - Menu Builders
-    @ViewBuilder
-    private func characterContextMenu(for overlay: CharacterOverlay) -> some View {
-        if let character = findCharacter(byNameKey: overlay.nameKey) {
-            Group {
-                Button(Lang.string("talk_button")) {
-                    viewModel.interpretCommand("talk \(character.nameKey)")
-                }
-                if !character.exchangeItems.isEmpty {
-                    Button(Lang.string("give_button")) {
-                        viewModel.interpretCommand("give")
-                    }
-                }
+
+    private var menuAlignment: Alignment {
+        if let menuItem = menuItem {
+            return menuItem.type == .inventory ? .bottomLeading : .topLeading
+        }
+
+        return Alignment(horizontal: .trailing, vertical: .center)
+    }
+
+    private func handleMenuAction(_ action: ContextMenuView.MenuAction) {
+        switch action {
+        case .talk:
+            if let character = menuCharacter {
+                viewModel.interpretCommand("talk \(character.nameKey)")
             }
-        } else {
-            Text(Lang.string("error_character_not_found"))
+        case .give:
+            viewModel.interpretCommand("give")
+        case .inspect:
+            if let (item, _) = menuItem {
+                viewModel.showItemDetails(item)
+            }
+        case .take:
+            if let (item, _) = menuItem {
+                viewModel.interpretCommand("take \(item.name)")
+            }
+        case .drop:
+            if let (item, _) = menuItem {
+                viewModel.interpretCommand("drop \(item.name)")
+            }
+        case .use:
+            if let (item, _) = menuItem {
+                viewModel.interpretCommand("use \(item.name)")
+            }
+        case .eat:
+            if let (item, _) = menuItem {
+                viewModel.interpretCommand("eat \(item.name)")
+            }
+        case .charge:
+            viewModel.interpretCommand("charge")
+        case .fire:
+            viewModel.interpretCommand("fire")
+        case .cancel:
+            break
         }
     }
-    
-    @ViewBuilder
-    private func contextMenu(for overlay: ItemOverlay) -> some View {
-        if let item = findItem(byId: overlay.id, type: overlay.type) {
-            Group {
-                Button(Lang.string("inspect")) { viewModel.showItemDetails(item) }
-                Divider()
-                if overlay.type == .roomItem && item.canBePickedUp {
-                    Button(Lang.string("take")) { viewModel.interpretCommand("take \(item.name)") }
-                } else if overlay.type == .inventory {
-                    Button(Lang.string("drop")) { viewModel.interpretCommand("drop \(item.name)") }
-                    if item.isUsable {
-                        Button(Lang.string("use")) { viewModel.interpretCommand("use \(item.name)") }
-                    }
-                    if item.type == .magicCookie {
-                        Button(Lang.string("eat")) { viewModel.interpretCommand("eat \(item.name)") }
-                    }
-                    if let beamer = item as? Beamer {
-                        Divider()
-                        if !beamer.isCharged {
-                            Button(Lang.string("charge")) { viewModel.interpretCommand("charge") }
-                        } else {
-                            Button(Lang.string("fire")) { viewModel.interpretCommand("fire") }
-                        }
-                    }
-                }
-            }
-        } else {
-            Text(Lang.string("error_item_not_found"))
-        }
-    }
-    
+
     // MARK: - Data Refresh Helpers
     private func refreshAllOverlays() {
         viewModel.clearAllOverlays()
@@ -137,34 +168,34 @@ struct TransitionOverlayView: View {
         loadRoomItemsFromCurrentRoom()
         loadInventoryItems()
     }
-    
+
     private func refreshInventoryOverlays() {
         viewModel.clearInventoryOverlays()
         loadInventoryItems()
     }
-    
+
     private func loadCharactersFromCurrentRoom() {
         for character in viewModel.player.currentRoom.characters {
             viewModel.addCharacterOverlay(nameKey: character.nameKey, imageName: character.nameKey)
         }
     }
-    
+
     private func loadRoomItemsFromCurrentRoom() {
         for item in viewModel.player.currentRoom.items {
             viewModel.addRoomItemOverlay(id: item.id, nameKey: item.name, imageName: item.imageName)
         }
     }
-    
+
     private func loadInventoryItems() {
         for item in viewModel.player.inventory {
             viewModel.addInventoryOverlay(id: item.id, nameKey: item.name, imageName: item.imageName)
         }
     }
-    
+
     private func findCharacter(byNameKey nameKey: String) -> StaticCharacter? {
         return viewModel.player.currentRoom.characters.first { $0.nameKey == nameKey }
     }
-    
+
     private func findItem(byId id: UUID, type: ItemOverlay.ItemOverlayType) -> Item? {
         if type == .roomItem {
             return viewModel.player.currentRoom.items.first { $0.id == id }
@@ -172,7 +203,7 @@ struct TransitionOverlayView: View {
             return viewModel.player.inventory.first { $0.id == id }
         }
     }
-    
+
     // MARK: - Image Views (Applying height scales uniformly to dimensions)
     @ViewBuilder
     private func characterImageView(for overlay: CharacterOverlay) -> some View {
@@ -181,9 +212,15 @@ struct TransitionOverlayView: View {
             .scaledToFit()
             .frame(width: 200 * scaleFactor, height: 256 * scaleFactor)
             .shadow(radius: 4 * scaleFactor)
-            .contextMenu { characterContextMenu(for: overlay) }
+            .onTapGesture { _ in
+                if let character = findCharacter(byNameKey: overlay.nameKey) {
+                    menuCharacter = character
+                    menuItem = nil
+                    showMenu = true
+                }
+            }
     }
-    
+
     @ViewBuilder
     private func itemImageView(for overlay: ItemOverlay) -> some View {
         Image(overlay.imageName)
@@ -191,43 +228,49 @@ struct TransitionOverlayView: View {
             .scaledToFit()
             .frame(width: 48 * scaleFactor, height: 48 * scaleFactor)
             .shadow(radius: 2 * scaleFactor)
-            .contextMenu { contextMenu(for: overlay) }
+            .onTapGesture { _ in
+                if let item = findItem(byId: overlay.id, type: overlay.type) {
+                    menuItem = (item, overlay.type)
+                    menuCharacter = nil
+                    showMenu = true
+                }
+            }
     }
-    
+
     // MARK: - Positioning Mathematics (Factored with respect to global bounds scale)
     private func positionForCharacter(_ overlay: CharacterOverlay, geometry: GeometryProxy) -> CGPoint {
         let count = viewModel.characterOverlays.count
         let index = viewModel.characterOverlays.firstIndex(where: { $0.id == overlay.id }) ?? 0
-        
+
         let overlayWidth = 160 * scaleFactor
         let overlaySpacing = 10 * scaleFactor
         let rightMargin = 15 * scaleFactor
-        
+
         let totalWidth = CGFloat(count) * overlayWidth + CGFloat(max(0, count - 1)) * overlaySpacing
         let startX = geometry.size.width - totalWidth - rightMargin
-        
+
         let posX = startX + CGFloat(index) * overlayWidth + (64 * scaleFactor)
         let posY = geometry.size.height - (256 * scaleFactor) - rightMargin + (128 * scaleFactor)
         return CGPoint(x: posX, y: posY)
     }
-    
+
     private func positionForRoomItem(_ overlay: ItemOverlay, geometry: GeometryProxy) -> CGPoint {
         let index = viewModel.roomItemOverlays.firstIndex(where: { $0.id == overlay.id }) ?? 0
         let padding = 15 * scaleFactor
         let itemSize = 48 * scaleFactor
         let itemSpacing = 10 * scaleFactor
-        
+
         let posX = padding + CGFloat(index) * (itemSize + itemSpacing) + (itemSize / 2)
         let posY: CGFloat = (5 * scaleFactor) + (itemSize / 2)
         return CGPoint(x: posX, y: posY)
     }
-    
+
     private func positionForInventoryItem(_ overlay: ItemOverlay, geometry: GeometryProxy) -> CGPoint {
         let index = viewModel.inventoryOverlays.firstIndex(where: { $0.id == overlay.id }) ?? 0
         let padding = 15 * scaleFactor
         let itemSize = 48 * scaleFactor
         let itemSpacing = 10 * scaleFactor
-        
+
         let posX = padding + CGFloat(index) * (itemSize + itemSpacing) + (itemSize / 2)
         let posY = geometry.size.height - itemSize - padding + (itemSize / 2)
         return CGPoint(x: posX, y: posY)

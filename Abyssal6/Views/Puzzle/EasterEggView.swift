@@ -75,7 +75,6 @@ struct EasterEggView: View {
                 }
                 .padding(.top, 20)
             }
-            .padding()
         }
         .onAppear {
             startFadeIn()

@@ -52,7 +52,7 @@ struct EndView: View {
                     .frame(width: 200)
 
                 }
-                .padding(.bottom, 50)
+                .padding(.bottom, 20)
             }
             .padding()
         }

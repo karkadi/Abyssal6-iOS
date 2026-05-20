@@ -13,7 +13,7 @@ protocol GameEngineProtocol: AnyObject, Sendable {
     var gameState: GameState { get set }
     var timeLeft: Int { get }
     var player: Player { get }
-    
+
     func startNewGame()
     func startMission()
     func restartGame()
@@ -44,9 +44,9 @@ enum GameState {
 
 @MainActor
 final class GameEngine: GameEngineProtocol {
-    
+
     static let shared = GameEngine()
-    
+
     // MARK: - Published State
     var gameState: GameState = .intro {
         didSet {
@@ -56,7 +56,7 @@ final class GameEngine: GameEngineProtocol {
             }
         }
     }
-    
+
     private(set) var timeLeft: Int = 600 {
         didSet {
             NotificationCenter.default.post(name: .timeLeftDidChange, object: nil)
@@ -67,7 +67,7 @@ final class GameEngine: GameEngineProtocol {
             }
         }
     }
-    
+
     // MARK: - Game Objects
     private(set) var player: Player
     private(set) var allRooms: [Room] = []
@@ -75,7 +75,7 @@ final class GameEngine: GameEngineProtocol {
     private var timerTask: Task<Void, Never>?
     private let musicPlayer = MusicPlayer()
     private var reactorRoom: Room?
-    
+
     // MARK: - Initialization
     init() {
         let (startRoom, moving) = Self.createRooms()
@@ -86,18 +86,18 @@ final class GameEngine: GameEngineProtocol {
         setupGameWorld()
         startNewGame()
     }
-    
+
     // MARK: - Game Lifecycle
     func startNewGame() {
         gameState = .intro
         timeLeft = 600
     }
-    
+
     func startMission() {
         gameState = .playing
         playBackgroundMusic("theme")
     }
-    
+
     func restartGame() {
         // Reinitialize everything
         let (startRoom, moving) = Self.createRooms()
@@ -111,19 +111,19 @@ final class GameEngine: GameEngineProtocol {
         refreshInventory()
         log(player.currentRoom.longDescription)
     }
-    
+
     func handleVictory() {
         gameState = .won
         playSound("congratulations")
         log(Lang.string("win"))
     }
-    
+
     func handleGameOver() {
         gameState = .lost
         playSound("explosion")
         log(Lang.string("game_over_message"))
     }
-    
+
     // MARK: - Timer
     private func startTimer() {
         Task {
@@ -133,15 +133,15 @@ final class GameEngine: GameEngineProtocol {
             }
         }
     }
-    
+
     // MARK: - World Setup
     private func setupGameWorld() {
         // Collect all rooms (recursively from player's starting room)
         allRooms = collectAllRooms(from: player.currentRoom)
-        
+
         // Find and store reactor room
         reactorRoom = allRooms.first { $0.key == "room_reacteur" }
-        
+
         // Initialize transporter rooms
         for room in allRooms {
             if let transporter = room as? TransporterRoom {
@@ -149,18 +149,18 @@ final class GameEngine: GameEngineProtocol {
             }
         }
     }
-    
+
     private func collectAllRooms(from start: Room) -> [Room] {
         var visited = Set<Room>()
         var result: [Room] = []
         var queue: [Room] = [start]
-        
+
         while !queue.isEmpty {
             let current = queue.removeFirst()
             if visited.contains(current) { continue }
             visited.insert(current)
             result.append(current)
-            
+
             for direction in Direction.allCases {
                 if let neighbor = current.getExit(direction.rawValue) {
                     queue.append(neighbor)
@@ -169,14 +169,14 @@ final class GameEngine: GameEngineProtocol {
         }
         return result
     }
-    
+
     // MARK: - Character Movement
     func moveAllCharacters() {
         for character in movingCharacters {
             let oldRoom = character.currentRoom
             character.move()
             let newRoom = character.currentRoom
-            
+
             if oldRoom !== newRoom {
                 if newRoom === player.currentRoom {
                     loadAndAddCharacterOverlay(character)
@@ -191,15 +191,15 @@ final class GameEngine: GameEngineProtocol {
             }
         }
     }
-    
+
     // MARK: - Command Handling
     func interpretCommand(_ input: String) {
         let parts = input.lowercased().split(separator: " ", maxSplits: 1).map(String.init)
         let commandWord = parts.first?.lowercased() ?? ""
         let argument = parts.count > 1 ? parts[1] : nil
-        
+
         log("> \(input)")
-        
+
         switch commandWord {
         case "go": goCommand(direction: argument)
         case "take": takeCommand(itemName: argument)
@@ -239,19 +239,19 @@ final class GameEngine: GameEngineProtocol {
         case "quit": quitGame()
         default: log(Lang.string("wrong_command"))
         }
-        
+
         moveAllCharacters()
     }
-    
+
     // MARK: - Movement Commands
     private func goCommand(direction: String?) {
         guard let dir = direction else {
             log(Lang.string("where_to_go"))
             return
         }
-        
+
         let current = player.currentRoom
-        
+
         if current.isDoorLocked(dir) {
             log(Lang.string("door_locked_message"))
             if let door = current.getDoor(in: dir) {
@@ -261,36 +261,36 @@ final class GameEngine: GameEngineProtocol {
             playSound("access")
             return
         }
-        
+
         guard let nextRoom = current.getExit(dir) else {
             log(Lang.string("no_door"))
             return
         }
-        
+
         let isTransporter = current is TransporterRoom
         if isTransporter {
             log(Lang.string("transporter_activated"))
         }
-        
+
         if current.hasDoor(in: dir) {
             current.doorPassed(dir)
         }
-        
+
         player.pushHistory()
         setPlayerRoom(nextRoom)
-        
+
         if isTransporter {
             log(Lang.string("transporter_arrival"))
         }
-        
+
         playSound("door")
-        
+
         if nextRoom.isReactor {
             // Show puzzle dialog (handled by UI, but we trigger via notification)
             gameState = .puzzle
         }
     }
-    
+
     private func backCommand() {
         if player.goBack() {
             playSound("door")
@@ -302,7 +302,7 @@ final class GameEngine: GameEngineProtocol {
             }
         }
     }
-    
+
     // MARK: - Inventory Commands
     private func takeCommand(itemName: String?) {
         guard let name = itemName else {
@@ -320,7 +320,7 @@ final class GameEngine: GameEngineProtocol {
                        Lang.string((error as? GameError)?.resourceKey ?? "")))
         }
     }
-    
+
     private func dropCommand(itemName: String?) {
         guard let name = itemName else {
             log(Lang.string("drop_what"))
@@ -331,12 +331,12 @@ final class GameEngine: GameEngineProtocol {
             log(player.weightString)
             NotificationCenter.default.post(name: .inventoryDidChange, object: nil)
             NotificationCenter.default.post(name: .roomDidChange, object: player.currentRoom)
-            
+
         } else {
             log(Lang.string("cannot_drop"))
         }
     }
-    
+
     // MARK: - Character Interaction
     private func talkCommand(characterName: String?) {
         guard let name = characterName else {
@@ -350,7 +350,7 @@ final class GameEngine: GameEngineProtocol {
         }
         log(character.speak())
     }
-    
+
     private func giveCommand(itemName: String?) {
         guard let name = itemName else {
             NotificationCenter.default.post(name: .showGivePopup, object: nil)
@@ -365,7 +365,7 @@ final class GameEngine: GameEngineProtocol {
             log(Lang.string("no_characters_here"))
             return
         }
-        
+
         for character in characters {
             if let response = character.reactToItem(item) {
                 log(response)
@@ -381,7 +381,7 @@ final class GameEngine: GameEngineProtocol {
         }
         log(Lang.string("no_one_wants_item"))
     }
-    
+
     private func handleExchange(character: StaticCharacter, givenItem: Item) {
         guard let receivedItem = character.performExchange(given: givenItem) else {
             log(Lang.string("exchange_failed"))
@@ -398,7 +398,7 @@ final class GameEngine: GameEngineProtocol {
             log(Lang.string("exchange_cancelled"))
         }
     }
-    
+
     private func handleHelp(character: StaticCharacter, givenItem: Item) {
         //  player.inventory.removeAll { $0.id == givenItem.id }
         player.setCurrentWeight(player.getCurrentWeight() - givenItem.weight)
@@ -406,7 +406,7 @@ final class GameEngine: GameEngineProtocol {
         log(String(format: Lang.string("help_received"), character.localizedName))
         refreshInventory()
     }
-    
+
     // MARK: - Beamer Commands
     private func chargeBeamer() {
         guard let beamer = player.findBeamerInInventory() else {
@@ -422,7 +422,7 @@ final class GameEngine: GameEngineProtocol {
         playSound("charge")
         refreshInventory()
     }
-    
+
     private func fireBeamer() {
         guard let beamer = player.findBeamerInInventory() else {
             log(Lang.string("no_beamer"))
@@ -441,7 +441,7 @@ final class GameEngine: GameEngineProtocol {
         log(Lang.string("beamer_fired"))
         playSound("teleport")
     }
-    
+
     // MARK: - Other Commands
     private func useCommand(itemName: String?) {
         guard let name = itemName else {
@@ -452,7 +452,7 @@ final class GameEngine: GameEngineProtocol {
             log(Lang.string("item_not_in_inventory"))
             return
         }
-        
+
         // Easter egg: torch in observatory
         if item.type == .torch && player.currentRoom.key == "room_obs" {
             guard let torch = item as? Torch else { return }
@@ -468,7 +468,7 @@ final class GameEngine: GameEngineProtocol {
             NotificationCenter.default.post(name: .showEasterEgg, object: torch)
             return
         }
-        
+
         // Key usage for doors
         let keyTypes: [ItemType] = [.blueCard, .redCard, .wrench, .divingSuit]
         if keyTypes.contains(item.type) {
@@ -495,7 +495,7 @@ final class GameEngine: GameEngineProtocol {
                     }
                     break
                 }
-                
+
             }
             if !used {
                 log(Lang.string("no_compatible_door"))
@@ -504,7 +504,7 @@ final class GameEngine: GameEngineProtocol {
             log(Lang.string("cannot_use_item"))
         }
     }
-    
+
     private func eatCommand(itemName: String) { // called by interpretCommand if needed
         guard let item = player.eatItem(itemName) else {
             log(Lang.string("item_not_in_room"))
@@ -520,7 +520,7 @@ final class GameEngine: GameEngineProtocol {
             log(String(format: Lang.string("cannot_eat"), item.information))
         }
     }
-    
+
     private func showHelp() {
         log(Lang.string("help"))
         log(getCommandWords())
@@ -531,12 +531,12 @@ final class GameEngine: GameEngineProtocol {
         log(Lang.string("help_talk"))
         log(Lang.string("help_give"))
     }
-    
+
     private func quitGame() {
         gameState = .quit
         log(Lang.string("end_game"))
     }
-    
+
     // MARK: - Save/Load (Stubs)
     private func saveGame(name: String?) {
         guard let name = name else {
@@ -546,7 +546,7 @@ final class GameEngine: GameEngineProtocol {
         // For now, just log
         log(String(format: Lang.string("save_success"), name))
     }
-    
+
     private func loadGame(name: String?) {
         guard let name = name else {
             log(Lang.string("load_usage"))
@@ -556,7 +556,7 @@ final class GameEngine: GameEngineProtocol {
         // Stub – would call GameLoaderXML equivalent
         log(Lang.string("load_error_xml"))
     }
-    
+
     // MARK: - UI Helpers
     func setPlayerRoom(_ room: Room) {
         player.setCurrentRoom(room)
@@ -564,59 +564,59 @@ final class GameEngine: GameEngineProtocol {
         NotificationCenter.default.post(name: .roomDidChange, object: room)
         refreshInventory()
         // Update overlays (handled by UI via notification)
-        
+
     }
-    
+
     private func showGiveDialog() {
         NotificationCenter.default.post(name: .showGiveDialog,
                                         object: nil)
     }
-    
+
     func showTalkDialog() {
         NotificationCenter.default.post(name: .showTalkDialog,
                                         object: nil)
     }
-    
+
     func refreshInventory() {
         NotificationCenter.default.post(name: .inventoryDidChange, object: nil)
     }
-    
+
     func log(_ message: String) {
         NotificationCenter.default.post(name: .gameLog, object: message)
     }
-    
+
     func playSound(_ soundFile: String) {
         musicPlayer.playSFX(soundFile)
     }
-    
+
     func playBackgroundMusic(_ file: String) {
         musicPlayer.playBackgroundMusic(file)
     }
-    
+
     func stopBackgroundMusic() {
         musicPlayer.stopBackgroundMusic()
     }
-    
+
     func getCommandWords() -> String {
         return "go, take, drop, inventory, talk, give, use, charge, fire, look, back, help, save, load, quit"
     }
-    
+
     // MARK: - Overlay Management (notifies UI)
     func loadAndAddCharacterOverlay(_ character: StaticCharacter) {
         NotificationCenter.default.post(name: .addCharacterOverlay,
                                         object: character.nameKey)
     }
-    
+
     func removeCharacterOverlay(_ character: StaticCharacter) {
         NotificationCenter.default.post(name: .removeCharacterOverlay,
                                         object: character.nameKey)
     }
-    
+
     func showItemDetails(_ item: Item) {
         NotificationCenter.default.post(name: .showItemDetails,
                                         object: item)
     }
-    
+
     // MARK: - Test Command
     /// Executes a test script file.
     /// - Parameter fileName: The name of the file (without extension) inside the app bundle.
@@ -627,19 +627,19 @@ final class GameEngine: GameEngineProtocol {
             log("Test file not found: \(fileName).txt")
             return false
         }
-        
+
         do {
             let content = try String(contentsOf: url, encoding: .utf8)
             let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
             var lineNumber = 0
             var executedCommands = 0
             var passed = true
-            
+
             for rawLine in lines {
                 lineNumber += 1
                 let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
                 if line.isEmpty || line.hasPrefix("#") { continue }
-                
+
                 if line.hasPrefix("roomis ") {
                     let expectedRoom = line.dropFirst(7).trimmingCharacters(in: .whitespaces)
                     if !verifyCurrentRoom(expectedRoom) {
@@ -684,54 +684,54 @@ final class GameEngine: GameEngineProtocol {
                     executedCommands += 1
                 }
             }
-            
+
             log("--- Test summary ---")
             log("File: \(fileName).txt")
             log("Total lines: \(lineNumber)")
             log("Commands executed: \(executedCommands)")
             log(passed ? "--- TEST PASSED ---" : "--- TEST FAILED ---")
             return passed
-            
+
         } catch {
             log("Error reading test file: \(error.localizedDescription)")
             return false
         }
     }
-    
+
     func setTestModeForAllTransporters(_ roomKey: String) {
         for room in allRooms where room is TransporterRoom {
             (room as? TransporterRoom)?.setForcedDestination(roomKey)
         }
     }
-    
+
     func clearTestModeForAllTransporters() {
         for room in allRooms where room is TransporterRoom {
             (room as? TransporterRoom)?.clearForcedDestination()
         }
     }
-    
+
     // MARK: - Test helpers
-    
+
     private func verifyCurrentRoom(_ expectedRoomKey: String) -> Bool {
         return player.currentRoom.key == expectedRoomKey
     }
-    
+
     private func verifyRoomHasItem(_ itemName: String) -> Bool {
         return player.currentRoom.containsItem(named: itemName)
     }
-    
+
     private func verifyRoomHasNotItem(_ itemName: String) -> Bool {
         return !player.currentRoom.containsItem(named: itemName)
     }
-    
+
     private func verifyPlayerHasItem(_ itemName: String) -> Bool {
         return player.hasItem(named: itemName)
     }
-    
+
     private func verifyPlayerHasNotItem(_ itemName: String) -> Bool {
         return !player.hasItem(named: itemName)
     }
-    
+
     // MARK: - Static Room Creation
     private static func createRooms() -> (Room, [MovingCharacter]) {
         // Same as your existing createRooms() method.
@@ -751,7 +751,7 @@ final class GameEngine: GameEngineProtocol {
         let airlock = Room(key: "room_air", imageName: "airlock.gif")
         let medbay = Room(key: "room_med", imageName: "medbay.gif")
         let transporter = TransporterRoom(key: "room_transporter", imageName: "transporter.gif")
-        
+
         sas.setExit("north", to: airlock)
         sas.setExit("up", to: transporter)
         transporter.setExit("down", to: sas)
@@ -759,89 +759,89 @@ final class GameEngine: GameEngineProtocol {
         airlock.setExit("north", to: posteGarde)
         airlock.setExit("up", to: dortoir)
         airlock.addItem(ItemType.beamer.createItem())
-        
+
         posteGarde.setExit("south", to: airlock)
         posteGarde.setExit("east", to: labo)
         posteGarde.setExit("north", to: medbay)
-        
+
         medbay.setExit("south", to: posteGarde)
         medbay.setExit("west", to: serre)
-        
+
         serre.setExit("east", to: medbay)
         serre.setLockedDoor(direction: "east", id: "door_serre", requiredKey: .blueCard, initiallyLocked: true, autoLock: false)
-        
+
         labo.setExit("west", to: posteGarde)
         labo.setExit("down", to: engine)
         labo.setLockedDoor(direction: "down", id: "door_labo_down", requiredKey: .divingSuit, initiallyLocked: true, autoLock: true)
-        
+
         engine.setExit("up", to: labo)
         engine.setExit("east", to: machines)
         engine.setLockedDoor(direction: "east", id: "door_engine_machines", requiredKey: .redCard, initiallyLocked: true, autoLock: false)
         engine.addItem(ItemType.wrench.createItem())
-        
+
         dortoir.setExit("east", to: infirmerie)
         dortoir.setTrapDoor("east")
         dortoir.setExit("down", to: airlock)
         dortoir.setExit("north", to: observation)
-        
+
         infirmerie.setExit("north", to: hydroponics)
-        
+
         observation.setExit("south", to: dortoir)
         observation.setExit("east", to: hydroponics)
         observation.addItem(ItemType.torch.createItem())
-        
+
         hydroponics.setExit("west", to: observation)
         hydroponics.addItem(ItemType.genetic.createItem())
-        
+
         machines.setExit("north", to: reacteur)
         machines.setExit("west", to: engine)
         machines.setLockedDoor(direction: "north", id: "door_machines", requiredKey: .wrench, initiallyLocked: true, autoLock: false)
-        
+
         let allRooms: [Room] = [sas, posteGarde, serre, labo, dortoir, infirmerie, machines,
                                 observation, hydroponics, engine, airlock, medbay, transporter]
         transporter.initializeDestinations(allRooms)
-        
+
         // Create characters (use StaticCharacter for static, MovingCharacter for moving)
         StaticCharacter(nameKey: "character_scientist", descriptionKey: "character_scientist_desc", currentRoom: labo)
             .setGreeting("character_scientist_greeting")
             .addExchange(givenType: .beamer, receivedItem: ItemType.oxygen.createItem(), messageKey: "character_scientist_exchange")
-        
+
         StaticCharacter(nameKey: "character_doctor", descriptionKey: "character_doctor_desc", currentRoom: medbay)
             .setGreeting("character_doctor_greeting")
             .addExchange(givenType: .oxygen, receivedItem: ItemType.magicCookie.createItem(), messageKey: "character_doctor_exchange")
-        
+
         StaticCharacter(nameKey: "character_guard", descriptionKey: "character_guard_desc", currentRoom: posteGarde)
             .setGreeting("character_guard_greeting")
             .addExchange(givenType: .torch, receivedItem: ItemType.blueCard.createItem(), messageKey: "character_guard_exchange")
-        
+
         StaticCharacter(nameKey: "character_engineer", descriptionKey: "character_engineer_desc", currentRoom: serre)
             .setGreeting("character_engineer_greeting")
             .addExchange(givenType: .genetic, receivedItem: ItemType.divingSuit.createItem(), messageKey: "character_engineer_exchange")
-        
+
         StaticCharacter(nameKey: "character_nurse", descriptionKey: "character_nurse_desc", currentRoom: infirmerie)
             .setGreeting("character_nurse_greeting")
             .addExchange(givenType: .blueCard, receivedItem: ItemType.firstAid.createItem(), messageKey: "character_nurse_exchange")
-        
+
         StaticCharacter(nameKey: "character_geneticist", descriptionKey: "character_geneticist_desc", currentRoom: hydroponics)
             .setGreeting("character_geneticist_greeting")
             .addExchange(givenType: .firstAid, receivedItem: ItemType.redCard.createItem(), messageKey: "character_geneticist_exchange")
-        
+
         let tech = MovingCharacter(nameKey: "character_wandering_tech", descriptionKey: "character_wandering_tech_desc",
                                    currentRoom: hydroponics, strategy: .random)
             .setGreeting("character_wandering_tech_greeting")
             .addItemResponse(item: ItemType.wrench.createItem(), responseKey: "character_wandering_tech_wrench")
-        
+
         let path: [Room] = [sas, airlock, dortoir, infirmerie, hydroponics, observation]
         let researcher = MovingCharacter(nameKey: "character_researcher", descriptionKey: "character_researcher_desc",
                                          currentRoom: sas, strategy: .followPath)
             .setPath(path)
             .setGreeting("character_researcher_greeting")
             .addItemResponse(item: ItemType.wrench.createItem(), responseKey: "character_wandering_tech_wrench")
-        
+
         let shadow = MovingCharacter(nameKey: "character_stalker", descriptionKey: "character_stalker_desc",
                                      currentRoom: serre, strategy: .followPlayer)
             .setGreeting("character_stalker_greeting")
-        
+
         return (sas, [shadow, tech, researcher] )
     }
 }

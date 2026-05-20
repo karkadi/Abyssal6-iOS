@@ -70,12 +70,9 @@ struct VoltmeterView: View {
 
                 // Digital voltage display
                 Text(String(format: "%.2f V", voltage))
-                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundColor(.green)
-                    .padding(6)
-                    .background(Color.black.opacity(0.7))
-                    .cornerRadius(6)
-                    .position(x: geometry.size.width - 50, y: geometry.size.height - 30)
+                    .position(x: geometry.size.width - 32, y: geometry.size.height - 20)
             }
         }
         .aspectRatio(900/680, contentMode: .fit)  // match original aspect ratio

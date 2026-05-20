@@ -42,6 +42,38 @@ final class TransitionOverlayViewModel {
     @ObservationIgnored
     @Injected private var engine: GameEngineProtocol
 
+    var calloutCharacter: StaticCharacter?
+    private var calloutQueue: [StaticCharacter] = []
+
+    // Show a single callout, queueing if another is already displayed
+    func showCharacterCallout(_ character: StaticCharacter) {
+        if calloutCharacter != nil {
+            calloutQueue.append(character)
+            return
+        }
+        calloutCharacter = character
+        // Dismiss after display duration (handled by the view itself)
+    }
+
+    // Called by the view when the current callout disappears
+    func dismissCallout() {
+        calloutCharacter = nil
+        if !calloutQueue.isEmpty {
+            let next = calloutQueue.removeFirst()
+            showCharacterCallout(next)
+        }
+    }
+
+    // Show callouts for all static (non‑moving) characters in the current room
+    func showCalloutsForCurrentRoom() {
+        let characters = player.currentRoom.characters
+        // Filter out moving characters (they have their own intro logic)
+        let staticChars = characters.filter { !($0 is MovingCharacter) }
+        for character in staticChars {
+            showCharacterCallout(character)
+        }
+    }
+
     var player: Player {
         return engine.player
     }

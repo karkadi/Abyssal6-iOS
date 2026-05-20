@@ -63,8 +63,21 @@ final class Lang {
 
     static let builtIn: [String: String] = [
         // Main messages
-        "welcome": "--- SYSTEM ALERT: ABYSSAL-STATION-6 ---\nAn abyssal storm has damaged the structure.\nAs maintenance engineer your mission is vital:\nStabilize the reactor before the pressure crushes us!\n\nType 'help' if you need assistance.",
-        "win": "******************************************\n       YOUR MISSION IS SUCCESSFUL!\n******************************************\nThanks to your speed the station is out of danger.\nThe reactor glows with a steady blue light.\nYou win!",
+        "welcome": """
+--- SYSTEM ALERT: ABYSSAL-STATION-6 ---
+An abyssal storm has damaged the structure.
+As maintenance engineer your mission is vital:
+Stabilize the reactor before the pressure crushes us!\n
+Type 'help' if you need assistance.
+""",
+        "win": """
+******************************************
+       YOUR MISSION IS SUCCESSFUL!
+******************************************
+Thanks to your speed the station is out of danger.
+The reactor glows with a steady blue light.
+You win!
+""",
         "help": "You are alone in the deep...\nYou must explore the station to find the repair tools.\n\nYour commands are:",
         "end_game": "Thanks for playing.\nGoodbye.\n",
 
@@ -82,6 +95,7 @@ final class Lang {
         "room_eng": "You are in the auxiliary engine room.\nThe floor vibrates heavily; a steam pipe has burst.",
         "room_air": "You are in the outer airlock.\nA heavy steel door leads into the deep sea. You feel the roar of pressure.",
         "room_med": "You are in the medical bay.\nRows of empty glass cabinets and a flickering surgical lamp cast long shadows.",
+        "room_transporter": "You are in the transporter Room",
 
         // Short room names
         "short_room_sas": "Entry Airlock",
@@ -97,6 +111,7 @@ final class Lang {
         "short_room_eng": "Auxiliary Engine Room",
         "short_room_air": "Outer Airlock",
         "short_room_med": "Medical Bay",
+        "short_room_transporter": "Transporter Room",
 
         // Errors
         "wrong_command": "I don't understand what you mean...",
@@ -266,7 +281,13 @@ final class Lang {
         "puzzle_title": "Reactor Control Panel",
         "puzzle_confirm_exit": "Do you really want to abandon the reactor repair?",
         "confirm": "Confirmation",
-        "puzzle": "EMERGENCY: Reactor control panel requires 3.3V power supply. Available voltage sources: 9V and 1.5V. Calculate which resistors must be connected to produce 3.3V output. Activate the corresponding switches and press the red button. Incorrect voltage will cause reactor explosion!",
+        "puzzle": """
+EMERGENCY: Reactor control panel requires 3.3V power supply.
+Available voltage sources: 9V and 1.5V.
+Calculate which resistors must be connected to produce 3.3V output.
+Activate the corresponding switches and press the red button.
+Incorrect voltage will cause reactor explosion!
+""",
 
         // Victory / Game Over
         "victory_title": "🏆 Victory!",
@@ -280,7 +301,21 @@ final class Lang {
         "intro_title": "Abyssal-6 – Introduction",
         "start_game": "START MISSION",
         "quit_game": "Quit",
-        "introduction": "SYSTEM LOG: ABYSSAL-6 RESEARCH STATION\nDATE: 31.12.2074  DEPTH: 1,000 METRES\nYou wake to the screaming, rhythmic sound of a proximity alarm. The air is saturated with the smell of ozone and burnt metal.\nYour memories are hazy... A structural tremor? An explosion? The computer's voice is cold and distorted:\n'CRITICAL FAILURE IN SECTOR 4.\nHULL INTEGRITY AT 14%.\nREACTOR OVERHEAT DETECTED.\nESTIMATION BEFORE EXPLOSION: 10 MINUTES.'\nYou are in the Entry Airlock. Through the reinforced quartz glass the abyss stares back at you—total, crushing darkness.\nYou have no crew. No radio contact. Just your suit and the sound of your own panicked breathing.\nFind the Reactor. Repair the core.\nOr join the cemetery at the bottom of the world.\n\nMISSION: REPAIR THE REACTOR BEFORE FINAL EXPLOSION.",
+        "introduction": """
+SYSTEM LOG: ABYSSAL-6 RESEARCH STATION
+DATE: 31.12.2074  DEPTH: 1,000 METRES
+You wake to the screaming, rhythmic sound of a proximity alarm. The air is saturated with the smell of ozone and burnt metal.
+Your memories are hazy... A structural tremor? An explosion? The computer's voice is cold and distorted:
+'CRITICAL FAILURE IN SECTOR 4.
+HULL INTEGRITY AT 14%.
+REACTOR OVERHEAT DETECTED.
+ESTIMATION BEFORE EXPLOSION: 10 MINUTES.'
+You are in the Entry Airlock. Through the reinforced quartz glass the abyss stares back at you—total, crushing darkness.
+You have no crew. No radio contact. Just your suit and the sound of your own panicked breathing.
+Find the Reactor. Repair the core.
+Or join the cemetery at the bottom of the world.\n
+MISSION: REPAIR THE REACTOR BEFORE FINAL EXPLOSION.
+""",
 
         // Easter egg
         "easter_egg_title": "🎁 Easter Egg",

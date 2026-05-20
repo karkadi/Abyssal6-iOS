@@ -11,7 +11,7 @@ import SwiftUI
 struct MainGameView: View {
     @State private var viewModel = GameViewModel()
     @State private var commandInput: String = ""
-
+    @FocusState private var isInputFocused: Bool
     // Baseline reference height standard matching secondary puzzle views
     private let refHeight: CGFloat = 680
 
@@ -70,6 +70,7 @@ struct MainGameView: View {
                     // Command input field
                     HStack {
                         TextField("Enter command", text: $commandInput)
+                            .focused($isInputFocused)
                             .textFieldStyle(.plain)
                             .padding(12 * scaleY)
                             .background(Color.abyssalPanel)
@@ -79,6 +80,7 @@ struct MainGameView: View {
                             .onSubmit(sendCommand)
 
                         AbyssalButton(title: "GO", color: .abyssalAccent) {
+                            isInputFocused = false
                             sendCommand()
                         }
                         .frame(width: 60 * scaleY, height: 44 * scaleY)
@@ -113,9 +115,11 @@ struct MainGameView: View {
                 .padding(.vertical)
             }
             .padding(12 * scaleY)
-            .background(Color.abyssalBg.ignoresSafeArea())
-
+            // Added horizontal safety padding so text/buttons don't clip behind hardware notches
+            .padding(.horizontal, geometry.safeAreaInsets.leading > 0 ? 0 : 8)
         }
+        // FIX: Moved .ignoresSafeArea() out to the parent view container level
+        .background(Color.abyssalBg)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
             viewModel.refreshUI()
