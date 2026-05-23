@@ -39,6 +39,7 @@ The gameplay, story, puzzles, and all assets (images, sounds, localisations) are
 ## 🖼️ Screenshots
 
 <div align="center">
+  <img src="./ScreenShoots/ipad.jpg" width="80%" /> <br/>
   <img src="https://kazazyanalexander.github.io/Abyssale-6/images/sas.gif" width="45%" alt="Entrance SAS" />
   <img src="https://kazazyanalexander.github.io/Abyssale-6/images/win.gif" width="45%" alt="Victory condition" />
 </div>
