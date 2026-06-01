@@ -15,10 +15,10 @@ final class GameViewModel {
     var terminalVM = TerminalViewModel()
 
     @ObservationIgnored
-    @Injected private var engine: GameEngineProtocol
+    @Injected(\.engine) private var engine: GameEngineProtocol
 
     @ObservationIgnored
-    @Injected var coordinator: AppCoordinator
+    @Injected(\.coordinator) var coordinator: AppCoordinator
 
     // MARK: - UI State
     private(set) var currentRoomName = ""

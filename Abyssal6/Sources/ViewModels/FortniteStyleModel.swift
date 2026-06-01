@@ -24,7 +24,7 @@ final class FortniteStyleModel {
     ]
 
     @ObservationIgnored
-    @Injected private var engine: GameEngineProtocol
+    @Injected(\.engine) private var engine: GameEngineProtocol
 
     func showIntro() {
         engine.gameState = .intro

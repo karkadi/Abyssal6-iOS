@@ -11,7 +11,7 @@ import DIContainer
 @MainActor
 final class IntroViewModel {
     @ObservationIgnored
-    @Injected private var engine: GameEngineProtocol
+    @Injected(\.engine) private var engine: GameEngineProtocol
 
     func stopBackgroundMusic() {
         engine.stopBackgroundMusic()

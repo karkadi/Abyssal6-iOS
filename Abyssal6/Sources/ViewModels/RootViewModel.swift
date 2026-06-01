@@ -11,7 +11,7 @@ import DIContainer
 @MainActor
 final class RootViewModel {
     @ObservationIgnored
-    @Injected private var coordinator: AppCoordinator
+    @Injected(\.coordinator) var coordinator: AppCoordinator
 
     var gameState: GameState { coordinator.gameState }
 

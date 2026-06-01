@@ -17,7 +17,7 @@ final class Player: Identifiable {
     private var roomHistory: [Room] = []         // last element is the current room
 
     @ObservationIgnored
-    @Injected private var engine: GameEngineProtocol
+    @Injected(\.engine) private var engine: GameEngineProtocol
 
     // MARK: - Initialization
     init(startingRoom: Room) {

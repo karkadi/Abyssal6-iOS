@@ -27,7 +27,7 @@ final class PuzzleViewModel {
     var onValidationResult: ((Bool) -> Void)?
 
     @ObservationIgnored
-    @Injected private var engine: GameEngineProtocol
+    @Injected(\.engine) private var engine: GameEngineProtocol
 
     // MARK: - Initialization
     init() {

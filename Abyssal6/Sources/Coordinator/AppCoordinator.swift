@@ -26,7 +26,7 @@ final class AppCoordinator {
 
     // MARK: - Dependencies
     @ObservationIgnored
-    @Injected private var engine: GameEngineProtocol
+    @Injected(\.engine) var engine: GameEngineProtocol
 
     // MARK: - Initialization
     init() {
@@ -76,4 +76,15 @@ final class AppCoordinator {
 
     // MARK: - Global actions
     func restartGame() { engine.restartGame() }
+}
+
+enum AppCoordinatorKey: DependencyKey {
+    static let liveValue: AppCoordinator = AppCoordinator()
+}
+
+extension DependencyValues {
+    var coordinator: AppCoordinator {
+        get { self[AppCoordinatorKey.self] }
+        set { self[AppCoordinatorKey.self] = newValue }
+    }
 }

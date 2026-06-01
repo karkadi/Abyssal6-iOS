@@ -20,7 +20,7 @@ final class TransitionOverlayViewModel {
     private var backgroundTask: Task<Void, Never>?
 
     @ObservationIgnored
-    @Injected private var engine: GameEngineProtocol
+    @Injected(\.engine) private var engine: GameEngineProtocol
 
     var calloutCharacter: StaticCharacter?
     private var calloutQueue: [StaticCharacter] = []

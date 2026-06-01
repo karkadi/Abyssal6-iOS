@@ -6,6 +6,18 @@
 //
 
 import Foundation
+import DIContainer
+
+enum GameEngineKey: DependencyKey {
+    static let liveValue: GameEngineProtocol = GameEngine.shared
+}
+
+extension DependencyValues {
+    var engine: GameEngineProtocol {
+        get { self[GameEngineKey.self] }
+        set { self[GameEngineKey.self] = newValue }
+    }
+}
 
 @MainActor
 protocol GameEngineProtocol: AnyObject, Sendable {

@@ -9,9 +9,6 @@ import DIContainer
 
 @main
 struct Abyssal6App: App {
-    init() {
-        registerSevices()
-    }
 
     var body: some Scene {
         WindowGroup {
@@ -19,9 +16,4 @@ struct Abyssal6App: App {
         }
     }
 
-    // Register Services
-    private func registerSevices() {
-        DIContainer.shared.register(GameEngineProtocol.self) { GameEngine.shared }
-        DIContainer.shared.register(AppCoordinator.self) { AppCoordinator() }
-    }
 }

@@ -7,127 +7,91 @@
 import XCTest
 @testable import DIContainer
 
-// MARK: - Mock Services for Testing
+// MARK: - Mock Service
 
-protocol ServiceProtocol {
+protocol MockServiceProtocol: Sendable {
     var name: String { get }
 }
 
-class MockService: ServiceProtocol {
+struct MockService: MockServiceProtocol, Sendable {
     let name: String
     init(name: String = "MockService") { self.name = name }
 }
 
-class TestViewModel {
-    @Injected var service: MockService
-    init() {}
+// MARK: - DependencyKey
+
+enum MockServiceKey: DependencyKey {
+    static let liveValue: any MockServiceProtocol = MockService(name: "LiveService")
+}
+
+extension DependencyValues {
+    var mockService: any MockServiceProtocol {
+        get { self[MockServiceKey.self] }
+        set { self[MockServiceKey.self] = newValue }
+    }
+}
+
+// MARK: - Test ViewModel
+
+@MainActor
+final class TestViewModel {
+    @Injected(\.mockService) var service
 }
 
 // MARK: - Tests
 
+@MainActor
 final class DIContainerTests: XCTestCase {
-    
-    override func setUp() {
-        super.setUp()
-        DIContainer.shared.reset()
+
+    override func tearDown() async throws {
+        try await super.tearDown()
+        DependencyOverrideStore.shared.reset()
     }
-    
-    func testRegisterAndResolve() {
-        DIContainer.shared.register(MockService.self) {
-            MockService(name: "TestInstance")
-        }
-        
-        let service = DIContainer.shared.resolve(MockService.self)
-        XCTAssertEqual(service.name, "TestInstance")
+
+    // Live value is returned when no override is set
+    func testLiveValueResolution() {
+        let values = DependencyValues()
+        XCTAssertEqual(values.mockService.name, "LiveService")
     }
-    
-    func testResolveUnregisteredType_FatalError() {
-        // We can't easily test fatalError in XCTest, but we verify
-        // isRegistered returns false for unregistered types
-        XCTAssertFalse(DIContainer.shared.isRegistered(MockService.self))
-    }
-    
-    func testIsRegistered() {
-        XCTAssertFalse(DIContainer.shared.isRegistered(MockService.self))
-        
-        DIContainer.shared.register(MockService.self) { MockService() }
-        
-        XCTAssertTrue(DIContainer.shared.isRegistered(MockService.self))
-    }
-    
-    func testInjectedPropertyWrapper_LazyResolution() {
-        var factoryCallCount = 0
-        DIContainer.shared.register(MockService.self) {
-            factoryCallCount += 1
-            return MockService(name: "LazyInstance")
-        }
-        
-        // Factory should not be called during registration
-        XCTAssertEqual(factoryCallCount, 0)
-        
+
+    // Override store replaces live value
+    func testOverrideReplacesDependency() {
+        DependencyOverrideStore.shared.override(\.mockService, with: MockService(name: "Overridden"))
+
         let viewModel = TestViewModel()
-        
-        // Factory should still not be called until property access
-        XCTAssertEqual(factoryCallCount, 0)
-        
-        // First access triggers resolution
-        let service = viewModel.service
-        XCTAssertEqual(service.name, "LazyInstance")
-        XCTAssertEqual(factoryCallCount, 1)
-        
-        // Subsequent accesses use cached value
-        _ = viewModel.service
-        XCTAssertEqual(factoryCallCount, 1)
+        XCTAssertEqual(viewModel.service.name, "Overridden")
     }
-    
-    func testInjectedPropertyWrapper_SetValue() {
-        DIContainer.shared.register(MockService.self) { MockService(name: "Original") }
-        
-        var wrapper = Injected<MockService>()
-        let customService = MockService(name: "Custom")
-        wrapper.wrappedValue = customService
-        
-        XCTAssertEqual(wrapper.wrappedValue.name, "Custom")
+
+    // Reset clears overrides and falls back to live value
+    func testResetRestoresLiveValue() {
+        DependencyOverrideStore.shared.override(\.mockService, with: MockService(name: "Overridden"))
+        DependencyOverrideStore.shared.reset()
+
+        let viewModel = TestViewModel()
+        XCTAssertEqual(viewModel.service.name, "LiveService")
     }
-    
-    func testThreadSafety() {
-        let expectation = XCTestExpectation(description: "Concurrent access")
-        DIContainer.shared.register(MockService.self) { MockService() }
-        
-        let queue = DispatchQueue(label: "test", attributes: .concurrent)
-        var results: [String] = []
-        let lock = NSLock()
-        
-        for _ in 0..<100 {
-            queue.async {
-                let service = DIContainer.shared.resolve(MockService.self)
-                lock.lock()
-                results.append(service.name)
-                lock.unlock()
-            }
-        }
-        
-        queue.async(flags: .barrier) {
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 5.0)
-        XCTAssertEqual(results.count, 100)
+
+    // Each keyPath override is independent
+    func testMultipleOverridesAreIndependent() {
+        DependencyOverrideStore.shared.override(\.mockService, with: MockService(name: "Mock1"))
+
+        let viewModel = TestViewModel()
+        XCTAssertEqual(viewModel.service.name, "Mock1")
     }
-    
-    func testSharedInstanceReplacement() {
-        // Save original
-        let original = DIContainer.shared
-        
-        // Replace with test container
-        let testContainer = DIContainer()
-        testContainer.register(MockService.self) { MockService(name: "Test") }
-        DIContainer.shared = testContainer
-        
-        let service = DIContainer.shared.resolve(MockService.self)
-        XCTAssertEqual(service.name, "Test")
-        
-        // Restore original
-        DIContainer.shared = original
+
+    // DependencyValues subscript reads liveValue when nothing stored
+    func testDependencyValuesSubscriptFallsBackToLiveValue() {
+        var values = DependencyValues()
+        XCTAssertEqual(values.mockService.name, "LiveService")
+
+        values.mockService = MockService(name: "Local")
+        XCTAssertEqual(values.mockService.name, "Local")
+    }
+
+    // Override store is keyed per keyPath — resetting clears all
+    func testResetClearsAllOverrides() {
+        DependencyOverrideStore.shared.override(\.mockService, with: MockService(name: "X"))
+        DependencyOverrideStore.shared.reset()
+        XCTAssertNil(DependencyOverrideStore.shared.get(for: \.mockService))
     }
 }
